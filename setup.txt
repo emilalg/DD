@@ -1,0 +1,23 @@
+Vaihe 1: cond env
+luo conda env jossa oikea python versio (3.8 tässä tapauksessa)
+conda install oikea pytorch versio (cpu only jos minä) + (Kato pytorch sivuilta oikea versio ja se conda install komento siihe)
+conda install pip
+kommentoi requirementsista duplikaatti dep pois (valkkaa vanhempi "timm" / kommentoi uudempi pois nii vähemmän työtä)
+pip install -r requirements.txt
+
+vaihtoehtoisesti voi ladata sen environment.yml jos haluaa ajaa cpu:lla (conda env create --file=environment.yml)
+
+Vaihe 2: datan säätö
+lataa kaggle data
+Pilko treenaus data test val ja train setteihin
+val kansion nimi pitiki olla "valid"!
+
+aakkosjärjestys split meikäläisel 
+ekat 80% train
+seuraavat 10 test
+vikat 10 val
+(480 trai, 56 test, 60valid) mulla
+
+Misc:
+Lataa opengl jos ei oo valmiiks(sudo apt-get install libgl1-mesa-glx)
+data kansioon test1 niminen kansio, johon treenaus,val ja test data (sisältää esimerkin :O)
