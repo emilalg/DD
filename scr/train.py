@@ -2,30 +2,40 @@
 """
 Created on Mon Oct 26 11:34:32 2020
 
+train.py is used to train the model. It takes command line arguments and train the model.
+It saves the logs and model in the specified path.
+
 @author: rajgudhe
 """
 
-import argparse
-import torch
-import torch.optim as optim
-import torch.nn as nn
-from torch.utils.data import DataLoader
-from dataset import MammoDataset
-import segmentation_models_multi_tasking as smp
-import matplotlib.pyplot as plt
+# importing libraries
+import argparse # for command line arguments
+import torch # for deep learning
+import torch.optim as optim # for optimization
+import torch.nn as nn # for neural network
+from torch.utils.data import DataLoader # for loading data
+from dataset import MammoDataset # for loading dataset
+import segmentation_models_multi_tasking as smp # for segmentation model
+import matplotlib.pyplot as plt # for plotting graphs
 
 
 
 ## hyperparmetres 
-OPTIMIZER = 'Adam'
+OPTIMIZER = 'Adam' # change the results log ['Adam', 'SGD']
 LOSS = 'FocalTverskyLoss' # change the results log ['DiceLoss', 'TverskyLoss', 'FocalTverskyLoss', 'BCEWithLogitsLoss']
-LR = 0.0001
+LR = 0.0001 # change the results log [0.0001, 0.00001]
 LR_SCHEDULE = 'reducelr' # 'steplr', 'reducelr'
 MODEL = 'Unet' #'Unet'
-ENCODER = 'resnet101'
+ENCODER = 'resnet101' 
 
+"""
+Function to parse command line arguments
+
+@returns: config object with all the command line arguments
+"""
 def parse_args():
-    parser = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser() # create an argumentparser object
+    # add arguments to the parser object
     parser.add_argument('--data_path', default='data', type=str, help='dataset root path')
     parser.add_argument('--dataset', default='dataset_name', type=str, help='Mammogram dataset names [CMMD, DDSM, VINDR]')
     parser.add_argument('-tb', '--train_batch_size', default=4, type=int, metavar='N', help='mini-batch size (default: 16)')
@@ -45,29 +55,32 @@ def parse_args():
     parser.add_argument('--logs_file_path', default='test_output/logs/unet.txt', type=str, help='path to save logs') # change here
     parser.add_argument('--model_save_path', default='test_output/models/unet.pth', type=str, help='path to save the model') # change her
         
-    config = parser.parse_args()
+    config = parser.parse_args() # parse the arguments and store it in config object
 
-    return config
+    return config # return the config object with all the command line arguments
 
 
+# Convert the config object to dictionary and print it
 config = vars(parse_args())
 print(config)   
 
+# set random seeds for reproducibility
 torch.manual_seed(1990)
 
+# create dataset and dataloader
 train_dataset = MammoDataset(path=config['data_path'], dataset=config['dataset'], split='train', augmentations=None)
 print(len(train_dataset))
 train_dataloader = DataLoader(train_dataset, shuffle=True, batch_size =config['train_batch_size'], num_workers=config['num_workers'])
 
+# create validation dataset and dataloader
 valid_dataset = MammoDataset(path=config['data_path'], dataset=config['dataset'], split='valid', augmentations=None)
 print(len(valid_dataset))
 valid_dataloader = DataLoader(valid_dataset, shuffle=True, batch_size=config['valid_batch_size'], num_workers=config['num_workers'])
 
-
+# define device
 DEVICE = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 # create segmentation model with pretrained encoder
-
 model = getattr(smp, config['segmentation_model'])(
     encoder_name= config['encoder'],
     encoder_weights = config['pretrained_weights'], 
@@ -78,9 +91,10 @@ model = model.to(DEVICE)
 model = nn.DataParallel(model)
 print(model, (3, 256, 256))
 
-
+# define loss function
 loss = getattr(smp.utils.losses, config['loss_fucntion'])()
 
+# define metrics which will be monitored during training
 metrics = [
     smp.utils.metrics.Precision(),
     smp.utils.metrics.Recall(),
@@ -90,12 +104,15 @@ metrics = [
     
 ]
 
-
+# define optimizer and lr scheduler which will be used during training
 optimizer = getattr(torch.optim, config['optimizer'])([ 
     dict(params=model.parameters(), lr=config['lr']),
 ])
 
-
+# LR_SCHEDULAR = 'steplr', 'reducelr', 'cosineannealinglr'
+# steplr: Decay the learning rate by gamma every step_size epochs.
+# reducelr: Reduce learning rate when a metric has stopped improving.  
+# cosineannealinglr: Cosine annealing scheduler. if T_max (max_iter) is reached, the learning rate is annealed linearly to zero.
 if LR_SCHEDULE == 'steplr':
     lr_schedular = optim.lr_scheduler.StepLR(optimizer, step_size=100, gamma=0.5)
 elif LR_SCHEDULE == 'reducelr':
@@ -103,7 +120,7 @@ elif LR_SCHEDULE == 'reducelr':
 else:
     lr_schedular = optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max = 2)
 
-# create epoch runners 
+# create training epoch runners 
 # it is a simple loop of iterating over dataloader`s samples
 train_epoch = smp.utils.train.TrainEpoch(
     model, 
@@ -115,6 +132,7 @@ train_epoch = smp.utils.train.TrainEpoch(
     verbose=True,
 )
 
+# create validation epoch runner
 valid_epoch = smp.utils.train.ValidEpoch(
     model, 
     loss=loss, 
@@ -123,13 +141,13 @@ valid_epoch = smp.utils.train.ValidEpoch(
     verbose=True,
 )
 
-
+# creating lists to store accuracy and loss values
 train_accuracy = []
 valid_accuracy = []
 train_loss = []
 valid_loss = []
 
-
+# open the logs file
 with open(config['logs_file_path'], 'a+') as logs_file:
     # train model for 40 epochs
     
@@ -145,6 +163,7 @@ with open(config['logs_file_path'], 'a+') as logs_file:
         train_loss.append(train_logs['focal_tversky_loss_weighted'])
         valid_loss.append(valid_logs['focal_tversky_loss_weighted'])
 
+#         print train and validation logs
         print('{} \t {} \t {} \t {} \t {} \t {} \t {} \t {} \t {} \t {} \t {} \t {} \t {} \t {} \t {} \t {} \t {}'.format(i, train_logs['focal_tversky_loss_breast'],
                                                                                                                     train_logs['focal_tversky_loss_dense'],
                                                                                                                     train_logs['focal_tversky_loss_weighted'],
@@ -184,7 +203,7 @@ plt.title('Accuracy Curve')
 plt.legend()
 plt.show()
 
-# Plot loss
+# Plot loss 
 plt.plot(epochs, train_loss, label='Train Loss')
 plt.plot(epochs, valid_loss, label='Validation Loss')
 
