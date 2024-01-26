@@ -1,33 +1,41 @@
+    # -*- coding: utf-8 -*-
+
+"""
+
+   This script is primarily used for evaluating. The duties of the prediction.py script are as follows:
+
+     1. Argument Parsing: It begins by parsing command line arguments. 
+        This allows users to specify various parameters like data paths, dataset names, number of workers, model save paths, etc.
+
+     2. Data Loading and Preparation: The script loads a test dataset using a custom dataset class MammoEvaluation 
+        and prepares a DataLoader for efficient batch processing. This is crucial for handling large datasets 
+        and feeding them to the model in manageable chunks.
+
+     3. Model Loading and Preparation: It loads a pre-trained model (and an older version of the model for comparison) 
+        from specified paths. The models are wrapped in DataParallel for multi-GPU support, enhancing performance.
+
+     4. Metric Initialization: Various evaluation metrics such as IoU (Intersection over Union), Precision, Recall, Accuracy, 
+        and F-score are initialized. These metrics are essential for quantitatively assessing the model's performance.
+
+     5. Evaluation Loop: The script enters a loop where it processes each batch of data from the test dataset. For each batch, it:
+            - Moves the images and masks to the GPU for faster computation.
+            - Generates predictions for breast and dense tissue using the current and old model.
+            - Calculates various metrics by comparing the predictions to the ground truth masks.
+            - Computes the area of breast and dense tissues in the predictions to determine tissue density.
+            - Logs the metric values and density calculations for each image.
+
+     6. Statistical Analysis: After processing all batches, the script calculates 
+        and logs the mean and confidence interval for each metric and the density measurements. 
+        This provides a statistical summary of the model's performance across the entire test dataset.
+
+     7. Logging: Throughout the process, results are logged into two files - one for general metrics 
+        and another for density differences. The script ensures that the files are properly initialized with headers 
+        and that existing content is not overwritten.
+
+
+"""
+
     
-    #    This script is primarily used for evaluating. The duties of the prediction.py script are as follows:
-
-    # 1. Argument Parsing: It begins by parsing command line arguments. 
-    #    This allows users to specify various parameters like data paths, dataset names, number of workers, model save paths, etc.
-
-    # 2. Data Loading and Preparation: The script loads a test dataset using a custom dataset class MammoEvaluation 
-    #    and prepares a DataLoader for efficient batch processing. This is crucial for handling large datasets 
-    #    and feeding them to the model in manageable chunks.
-
-    # 3. Model Loading and Preparation: It loads a pre-trained model (and an older version of the model for comparison) 
-    #    from specified paths. The models are wrapped in DataParallel for multi-GPU support, enhancing performance.
-
-    # 4. Metric Initialization: Various evaluation metrics such as IoU (Intersection over Union), Precision, Recall, Accuracy, 
-    #    and F-score are initialized. These metrics are essential for quantitatively assessing the model's performance.
-
-    # 5. Evaluation Loop: The script enters a loop where it processes each batch of data from the test dataset. For each batch, it:
-        #Moves the images and masks to the GPU for faster computation.
-        #Generates predictions for breast and dense tissue using the current and old model.
-        #Calculates various metrics by comparing the predictions to the ground truth masks.
-        #Computes the area of breast and dense tissues in the predictions to determine tissue density.
-        #Logs the metric values and density calculations for each image.
-
-    # 6. Statistical Analysis: After processing all batches, the script calculates 
-    #    and logs the mean and confidence interval for each metric and the density measurements. 
-    #    This provides a statistical summary of the model's performance across the entire test dataset.
-
-    # 7. Logging: Throughout the process, results are logged into two files - one for general metrics 
-    #    and another for density differences. The script ensures that the files are properly initialized with headers 
-    #    and that existing content is not overwritten.
 
 # Importing necessary libraries
 import argparse  # Used for parsing command line arguments
@@ -44,7 +52,10 @@ warnings.filterwarnings("ignore")  # Ignoring warnings
 import requests  # Module to handle HTTP requests
 from pathlib import Path  # Library for handling filesystem paths
 
-# Function to parse command line arguments
+"""
+Function to parse command line arguments
+@returns: The parsed arguments as a config object
+"""
 def parse_args():
     parser = argparse.ArgumentParser() # Initialize argument parser
     # Adding arguments to the parser :
@@ -117,7 +128,7 @@ Precision = smp.utils.metrics.Precision()
 
 # Recall - Recall measures the ratio of true positive predictions to the total actual positives. This metric gives us an 
 # indication of the model's ability to find all relevant instances within the dataset. In the context of medical imaging, for example, 
-# high recall would mean that the model is able to detect the majority of important features, such as tumors or lesions, which is 
+# high recall would mean that the model is able to detect the majority of important features, such as tumors, dense-area or lesions, which is 
 # critical for diagnosis.
 Recall = smp.utils.metrics.Recall()
 
