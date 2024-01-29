@@ -5,6 +5,8 @@ data/*
 data/dataset_name/
 data/dataset_name/**
 .DS_Store
+breast-density-prediction/*
+data_original/*
 
 # ------------------------------------------
 
