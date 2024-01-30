@@ -16,7 +16,7 @@ import albumentations as A
 from collections import namedtuple
 
 SplitRatios = namedtuple('SplitRatios', ['train', 'valid', 'test'])
-split_ratios = SplitRatios(train=0.6, valid=0.2, test=0.2)
+split_ratios = SplitRatios(train=0.8, valid=0.1, test=0.1)
 
 def save_files_for_evaluation (path, whole_dataset, train_set, val_set, test_set):
     seed = torch.seed()
@@ -35,8 +35,22 @@ def save_files_for_evaluation (path, whole_dataset, train_set, val_set, test_set
         for filename in test_set_files:
             f.write(filename + '\n') 
 
+def split_orderly(whole_dataset, split_ratios):
+    train_set = torch.utils.data.Subset(whole_dataset, 
+                                        range(int(len(whole_dataset) * split_ratios.train)))
+    val_set = torch.utils.data.Subset(whole_dataset, 
+                                      range(int(len(whole_dataset) * split_ratios.train),
+                                            int(len(whole_dataset) * (split_ratios.train + split_ratios.valid))))
+    test_set = torch.utils.data.Subset(whole_dataset, 
+                                       range(int(len(whole_dataset) * (split_ratios.train + split_ratios.valid)),
+                                             len(whole_dataset)))
+    print("printt ", test_set.indices)
+    return train_set, val_set, test_set
+
+
 def get_dataset_splits(path, split_ratios=split_ratios, generator=torch.Generator().manual_seed(42)):
     # check if path is empty
+    print(path)
     if not os.path.exists(path):
         raise FileNotFoundError(f'Path {path} does not exist! the directory should have breast_masks, dense_masks and images -folders' )
     if (split_ratios.train + split_ratios.valid + split_ratios.test) > 1.0:
@@ -46,8 +60,15 @@ def get_dataset_splits(path, split_ratios=split_ratios, generator=torch.Generato
     # split the file names into train, valid and test sets
     train_set, val_set, test_set = random_split(whole_dataset, [split_ratios.train, split_ratios.valid, split_ratios.test], generator=generator)
     
+    # alternatively just pick them orderly
+    # train_set, val_set, test_set = split_orderly(whole_dataset, split_ratios)
+    
     # save the split to a file. maybe it will be used for evaluation
     save_files_for_evaluation(path, whole_dataset, train_set, val_set, test_set)
+    # convert train_set and val_set to list of filenames
+    train_set = [os.path.basename(whole_dataset[i]) for i in train_set.indices]
+    val_set = [os.path.basename(whole_dataset[i]) for i in val_set.indices]
+    test_set = [os.path.basename(whole_dataset[i]) for i in test_set.indices]
     
     return (train_set, val_set, test_set)
 
@@ -69,9 +90,9 @@ class MammoDataset(Dataset):
         #self.augmentation_type = augmentation_type
 
         
-        self.images = natsorted([os.path.join(self.path, 'input_images', filename) for filename in filenames])
+        self.images = natsorted([os.path.join(self.path, 'images', filename) for filename in filenames])
         self.masks = natsorted([os.path.join(self.path, 'breast_masks', filename) for filename in filenames])
-        self.contours = natsorted([os.path.join(self.path, 'images', filename) for filename in filenames])
+        self.contours = natsorted([os.path.join(self.path, 'dense_masks', filename) for filename in filenames])
         #self.images = natsorted(glob.glob(os.path.join(self.path, 'input_images/*')))
         #self.masks = natsorted(glob.glob(os.path.join(self.path, 'breast_masks/*')))
         #self.contours = natsorted(glob.glob(os.path.join(self.path, 'images/*')))

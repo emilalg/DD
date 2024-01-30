@@ -18,21 +18,44 @@ from dataset import MammoDataset, get_dataset_splits  # for loading dataset
 import segmentation_models_multi_tasking as smp  # for segmentation model
 import matplotlib.pyplot as plt  # for plotting graphs
 import os
+from utils import load_env
 
 
+"""These are the default parameters. Do not modify them here. instead create .env file in project root or use command line arguments!"""
+load_env()
 ## hyperparmetres
-OPTIMIZER = "Adam"  # change the results log ['Adam', 'SGD']
-LOSS = "FocalTverskyLoss"  # change the results log ['DiceLoss', 'TverskyLoss', 'FocalTverskyLoss', 'BCEWithLogitsLoss']
-LR = 0.0001  # change the results log [0.0001, 0.00001]
-LR_SCHEDULE = "reducelr"  # 'steplr', 'reducelr'
-MODEL = "Unet"  #'Unet'
-ENCODER = "resnet101"
-NUM_EPOCHS = 5
-NUM_WORKERS = 2
-TRAIN_BATCH_SIZE = 4
-VALID_BATCH_SIZE = 4
-ACTIVATION_FUNCTION = "sigmoid"  # 'sigmoid', 'softmax'
-PRETRAINED_WEIGHTS =  None
+OPTIMIZER = os.getenv("OPTIMIZER", "Adam")  # change the results log ['Adam', 'SGD']
+LOSS = os.getenv("LOSS", "FocalTverskyLoss")  # change the results log ['DiceLoss', 'TverskyLoss', 'FocalTverskyLoss', 'BCEWithLogitsLoss']
+LR = float(os.getenv("LR", 0.0001))  # change the results log [0.0001, 0.00001]
+LR_SCHEDULE = os.getenv("LR_SCHEDULE", "reducelr")  # 'steplr', 'reducelr'
+MODEL = os.getenv("MODEL", "Unet")  # 'Unet'
+ENCODER = os.getenv("ENCODER", "resnet101")
+NUM_EPOCHS = int(os.getenv("NUM_EPOCHS", 5))
+NUM_WORKERS = int(os.getenv("NUM_WORKERS", 0))
+TRAIN_BATCH_SIZE = int(os.getenv("TRAIN_BATCH_SIZE", 4))
+VALID_BATCH_SIZE = int(os.getenv("VALID_BATCH_SIZE", 4))
+ACTIVATION_FUNCTION = os.getenv("ACTIVATION_FUNCTION", "sigmoid")  # 'sigmoid', 'softmax'
+PRETRAINED_WEIGHTS = os.getenv("PRETRAINED_WEIGHTS", None)
+DATA_PATH = os.getenv("DATA_PATH", "../breast-density-prediction/train/train")
+LOGS_FILE_PATH = os.getenv("LOGS_FILE_PATH", "test_output/logs/unet.txt")
+MODEL_SAVE_PATH = os.getenv("MODEL_SAVE_PATH", "test_output/models/unet.pth")
+
+print("Hyperparameters:")
+print(f"  OPTIMIZER: {OPTIMIZER}")
+print(f"  LOSS: {LOSS}")
+print(f"  LR: {LR}")
+print(f"  LR_SCHEDULE: {LR_SCHEDULE}")
+print(f"  MODEL: {MODEL}")
+print(f"  ENCODER: {ENCODER}")
+print(f"  NUM_EPOCHS: {NUM_EPOCHS}")
+print(f"  NUM_WORKERS: {NUM_WORKERS}")
+print(f"  TRAIN_BATCH_SIZE: {TRAIN_BATCH_SIZE}")
+print(f"  VALID_BATCH_SIZE: {VALID_BATCH_SIZE}")
+print(f"  ACTIVATION_FUNCTION: {ACTIVATION_FUNCTION}")
+print(f"  PRETRAINED_WEIGHTS: {PRETRAINED_WEIGHTS}")
+print(f"  DATA_PATH: {DATA_PATH}")
+print(f"  LOGS_FILE_PATH: {LOGS_FILE_PATH}")
+print(f"  MODEL_SAVE_PATH: {MODEL_SAVE_PATH}")
 
 """
 Function to parse command line arguments
@@ -40,24 +63,41 @@ Function to parse command line arguments
 @returns: config object with all the command line arguments
 """
 
-def main(): 
+
+def main():
     def parse_args():
         parser = argparse.ArgumentParser()  # create an argumentparser object
         # add arguments to the parser object
-        parser.add_argument("--data_path", default="../data/train/train", type=str, help="dataset root path")
+        parser.add_argument("--data_path", default=DATA_PATH, type=str, help="dataset root path")
         parser.add_argument(
-            "-tb", "--train_batch_size", default=TRAIN_BATCH_SIZE, type=int, metavar="N", help="mini-batch size (default: 4)"
+            "-tb",
+            "--train_batch_size",
+            default=TRAIN_BATCH_SIZE,
+            type=int,
+            metavar="N",
+            help="mini-batch size (default: 4)",
         )
         parser.add_argument(
-            "-vb", "--valid_batch_size", default=VALID_BATCH_SIZE, type=int, metavar="N", help="mini-batch size (default: 4)"
+            "-vb",
+            "--valid_batch_size",
+            default=VALID_BATCH_SIZE,
+            type=int,
+            metavar="N",
+            help="mini-batch size (default: 4)",
         )
-        parser.add_argument("--num_workers", default=NUM_WORKERS, type=int, help="Number of workers (default: 0)")
+        parser.add_argument(
+            "--num_workers", default=NUM_WORKERS, type=int, help="Number of workers (default: 0)"
+        )
 
-        parser.add_argument("--segmentation_model", default=MODEL, type=str, help="Segmentation model Unet/FPN")
+        parser.add_argument(
+            "--segmentation_model", default=MODEL, type=str, help="Segmentation model Unet/FPN"
+        )
         parser.add_argument(
             "--encoder", default=ENCODER, type=str, help="encoder name resnet18, vgg16......."
         )  # change here
-        parser.add_argument("--pretrained_weights", default=PRETRAINED_WEIGHTS, type=str, help="imagenet weights")
+        parser.add_argument(
+            "--pretrained_weights", default=PRETRAINED_WEIGHTS, type=str, help="imagenet weights"
+        )
         parser.add_argument(
             "--activation_function",
             default=ACTIVATION_FUNCTION,
@@ -71,16 +111,15 @@ def main():
         parser.add_argument("--num_epochs", default=5, type=int, help="Number of epochs")
 
         parser.add_argument(
-            "--logs_file_path", default="test_output/logs/unet.txt", type=str, help="path to save logs"
+            "--logs_file_path", default=LOGS_FILE_PATH, type=str, help="path to save logs"
         )  # change here
         parser.add_argument(
-            "--model_save_path", default="test_output/models/unet.pth", type=str, help="path to save the model"
+            "--model_save_path", default=MODEL_SAVE_PATH, type=str, help="path to save the model"
         )  # change her
 
         config = parser.parse_args()  # parse the arguments and store it in config object
 
         return config  # return the config object with all the command line arguments
-
 
     # Convert the config object to dictionary and print it
     config = vars(parse_args())
@@ -89,24 +128,24 @@ def main():
     # set random seeds for reproducibility
     torch.manual_seed(1990)
 
-    train_set, val_set, test_set = get_dataset_splits(
-        path=os.path.join(os.path.dirname(__file__), "../breast-density-prediction/train/train")
-    )
+    train_set, val_set, test_set = get_dataset_splits(path=os.path.join(os.path.dirname(__file__), DATA_PATH))
 
     # create dataset and dataloader
     train_dataset = MammoDataset(
-        path=os.path.join(os.path.dirname(__file__), "../data/train/train"), filenames=train_set, augmentations=None
+        path=os.path.join(os.path.dirname(__file__), DATA_PATH),
+        filenames=train_set,
+        augmentations=None,
     )
-    print(len(train_dataset))
     train_dataloader = DataLoader(
         train_dataset, shuffle=True, batch_size=config["train_batch_size"], num_workers=config["num_workers"]
     )
 
     # create validation dataset and dataloader
     valid_dataset = MammoDataset(
-        path=os.path.join(os.path.dirname(__file__), "../data/train/train"), filenames=val_set, augmentations=None
+        path=os.path.join(os.path.dirname(__file__), DATA_PATH),
+        filenames=val_set,
+        augmentations=None,
     )
-    print(len(valid_dataset))
     valid_dataloader = DataLoader(
         valid_dataset, shuffle=True, batch_size=config["valid_batch_size"], num_workers=config["num_workers"]
     )
@@ -114,7 +153,7 @@ def main():
     # define device
     if torch.cuda.is_available():
         DEVICE = torch.device("cuda")
-    #elif torch.backends.mps.is_available():
+    # elif torch.backends.mps.is_available():
     #    DEVICE = torch.device("mps")
     #    PYTORCH_ENABLE_MPS_FALLBACK=1
     else:
@@ -131,7 +170,7 @@ def main():
 
     model = model.to(DEVICE)
     model = nn.DataParallel(model)
-    print(model, (3, 256, 256))
+    # print(model, (3, 256, 256))
 
     # define loss function
     loss = getattr(smp.utils.losses, config["loss_fucntion"])()
@@ -143,6 +182,7 @@ def main():
         smp.utils.metrics.Accuracy(),
         smp.utils.metrics.Fscore(),
         smp.utils.metrics.IoU(threshold=0.5),
+        # calculate mean absolute error (important)
     ]
 
     # define optimizer and lr scheduler which will be used during training
@@ -205,27 +245,25 @@ def main():
             train_loss.append(train_logs["focal_tversky_loss_weighted"])
             valid_loss.append(valid_logs["focal_tversky_loss_weighted"])
 
-            #         print train and validation logs
+            # print train and validation logs
             print(
-                "{} \t {} \t {} \t {} \t {} \t {} \t {} \t {} \t {} \t {} \t {} \t {} \t {} \t {} \t {} \t {} \t {}".format(
-                    i,
-                    train_logs["focal_tversky_loss_breast"],
-                    train_logs["focal_tversky_loss_dense"],
-                    train_logs["focal_tversky_loss_weighted"],
-                    train_logs["precision"],
-                    train_logs["recall"],
-                    train_logs["accuracy"],
-                    train_logs["fscore"],
-                    train_logs["iou_score"],
-                    valid_logs["focal_tversky_loss_breast"],
-                    valid_logs["focal_tversky_loss_dense"],
-                    valid_logs["focal_tversky_loss_weighted"],
-                    valid_logs["precision"],
-                    valid_logs["recall"],
-                    valid_logs["accuracy"],
-                    valid_logs["fscore"],
-                    valid_logs["iou_score"],
-                ),
+                f"{train_logs['focal_tversky_loss_breast']}"
+                f"\t {train_logs['focal_tversky_loss_dense']}"
+                f"\t {train_logs['focal_tversky_loss_weighted']}"
+                f"\t {i}"
+                f"\t {train_logs['precision']}"
+                f"\t {train_logs['recall']}"
+                f"\t {train_logs['accuracy']}"
+                f"\t {train_logs['fscore']}"
+                f"\t {train_logs['iou_score']}"
+                f"\t {valid_logs['focal_tversky_loss_breast']}"
+                f"\t {valid_logs['focal_tversky_loss_dense']}"
+                f"\t {valid_logs['focal_tversky_loss_weighted']}"
+                f"\t {valid_logs['precision']}"
+                f"\t {valid_logs['recall']}"
+                f"\t {valid_logs['accuracy']}"
+                f"\t {valid_logs['fscore']}"
+                f"\t {valid_logs['iou_score']}",
                 file=logs_file,
             )
 
@@ -234,7 +272,6 @@ def main():
                 max_score = valid_logs["iou_score"]
                 torch.save(model, config["model_save_path"])
                 print("Model saved!")
-
 
     # Plot accuracy and loss curves
     epochs = range(1, config["num_epochs"] + 1)
@@ -258,6 +295,7 @@ def main():
     plt.title("Loss Curve")
     plt.legend()
     plt.show()
+
 
 if __name__ == "__main__":
     main()
