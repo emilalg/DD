@@ -10,32 +10,92 @@ import glob
 from natsort import natsorted
 import cv2
 import torch
-from torch.utils.data import Dataset
+from torch.utils.data import Dataset, random_split
 from torchvision import transforms
 import albumentations as A
+from collections import namedtuple
+
+SplitRatios = namedtuple('SplitRatios', ['train', 'valid', 'test'])
+split_ratios = SplitRatios(train=0.8, valid=0.1, test=0.1)
+
+def save_files_for_evaluation (path, whole_dataset, train_set, val_set, test_set):
+    seed = torch.seed()
+    train_set_files = [os.path.basename(whole_dataset[i]) for i in train_set.indices]
+    val_set_files = [os.path.basename(whole_dataset[i]) for i in val_set.indices]
+    test_set_files = [os.path.basename(whole_dataset[i]) for i in test_set.indices]
+    with open(os.path.join(path, f'{seed}.txt'), 'w') as f:
+        f.write(f'Seed: {seed}\n')
+        f.write('Train:\n')
+        for filename in train_set_files: 
+            f.write(filename + '\n') 
+        f.write('Valid:\n')
+        for filename in val_set_files:
+            f.write(filename + '\n') 
+        f.write('Test:\n')
+        for filename in test_set_files:
+            f.write(filename + '\n') 
+
+def split_orderly(whole_dataset, split_ratios):
+    train_set = torch.utils.data.Subset(whole_dataset, 
+                                        range(int(len(whole_dataset) * split_ratios.train)))
+    val_set = torch.utils.data.Subset(whole_dataset, 
+                                      range(int(len(whole_dataset) * split_ratios.train),
+                                            int(len(whole_dataset) * (split_ratios.train + split_ratios.valid))))
+    test_set = torch.utils.data.Subset(whole_dataset, 
+                                       range(int(len(whole_dataset) * (split_ratios.train + split_ratios.valid)),
+                                             len(whole_dataset)))
+    print("printt ", test_set.indices)
+    return train_set, val_set, test_set
+
+
+def get_dataset_splits(path, split_ratios=split_ratios, generator=torch.Generator().manual_seed(42)):
+    # check if path is empty
+    print(path)
+    if not os.path.exists(path):
+        raise FileNotFoundError(f'Path {path} does not exist! the directory should have breast_masks, dense_masks and images -folders' )
+    if (split_ratios.train + split_ratios.valid + split_ratios.test) > 1.0:
+        raise ValueError(f'Split ratios should be less than or equal to 1. Current split ratios are {split_ratios}')
+   
+    whole_dataset = natsorted(glob.glob(os.path.join(path, 'images/*')))
+    # split the file names into train, valid and test sets
+    train_set, val_set, test_set = random_split(whole_dataset, [split_ratios.train, split_ratios.valid, split_ratios.test], generator=generator)
+    
+    # alternatively just pick them orderly
+    # train_set, val_set, test_set = split_orderly(whole_dataset, split_ratios)
+    
+    # save the split to a file. maybe it will be used for evaluation
+    save_files_for_evaluation(path, whole_dataset, train_set, val_set, test_set)
+    # convert train_set and val_set to list of filenames
+    train_set = [os.path.basename(whole_dataset[i]) for i in train_set.indices]
+    val_set = [os.path.basename(whole_dataset[i]) for i in val_set.indices]
+    test_set = [os.path.basename(whole_dataset[i]) for i in test_set.indices]
+    
+    return (train_set, val_set, test_set)
 
 class MammoDataset(Dataset):
     """
     Mammodataset class it's used for loading and
     transforming mammography images and masks
     """
-    def __init__(self, path, dataset, split, augmentations=False):
+    def __init__(self, path, filenames, augmentations=False):
         """ used to initialize class with required parameters
         :param path: Path to the dataset
         :param dataset: Name of the dataset folder
+        :param filenames: List of images from which the dataset will be created
         :param split: Type of datasetsplit what is used such as 'train', 'valid' or 'test'
 
         """
         self.path = path
-        self.split = split
-        self.dataset = dataset
         self.augmentations = augmentations
         #self.augmentation_type = augmentation_type
 
         
-        self.images = natsorted(glob.glob(os.path.join(self.path, self.dataset, self.split, 'input_image/*')))
-        self.masks = natsorted(glob.glob(os.path.join(self.path, self.dataset, self.split, 'breast_mask/*')))
-        self.contours = natsorted(glob.glob(os.path.join(self.path, self.dataset, self.split, 'dense_mask/*')))
+        self.images = natsorted([os.path.join(self.path, 'images', filename) for filename in filenames])
+        self.masks = natsorted([os.path.join(self.path, 'breast_masks', filename) for filename in filenames])
+        self.contours = natsorted([os.path.join(self.path, 'dense_masks', filename) for filename in filenames])
+        #self.images = natsorted(glob.glob(os.path.join(self.path, 'input_images/*')))
+        #self.masks = natsorted(glob.glob(os.path.join(self.path, 'breast_masks/*')))
+        #self.contours = natsorted(glob.glob(os.path.join(self.path, 'images/*')))
         
     def __len__(self):
         """
