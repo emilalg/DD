@@ -78,7 +78,6 @@ class DSCPlusPlusLoss(base.Loss):
             loss += class_loss
 
         final_loss = loss.mean()  # Reducing the loss to a scalar
-        print(f"final loss shape: {final_loss.shape}")  # Debugging
         return final_loss
 
 

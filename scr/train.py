@@ -25,7 +25,7 @@ from utils import load_env
 load_env()
 ## hyperparmetres
 OPTIMIZER = os.getenv("OPTIMIZER", "Adam")  # change the results log ['Adam', 'SGD']
-LOSS = os.getenv("LOSS", "FocalTverskyLoss")  # change the results log ['DiceLoss', 'TverskyLoss', 'FocalTverskyLoss', 'BCEWithLogitsLoss']
+LOSS = os.getenv("LOSS", "FocalTverskyLoss")  # change the results log ['DiceLoss', 'TverskyLoss', 'FocalTverskyLoss', 'BCEWithLogitsLoss, DSCPlusPlusLoss']
 LR = float(os.getenv("LR", 0.0001))  # change the results log [0.0001, 0.00001]
 LR_SCHEDULE = os.getenv("LR_SCHEDULE", "reducelr")  # 'steplr', 'reducelr'
 MODEL = os.getenv("MODEL", "Unet")  # 'Unet'
@@ -39,6 +39,7 @@ PRETRAINED_WEIGHTS = os.getenv("PRETRAINED_WEIGHTS", None)
 DATA_PATH = os.getenv("DATA_PATH", "../breast-density-prediction/train/train")
 LOGS_FILE_PATH = os.getenv("LOGS_FILE_PATH", "test_output/logs/unet.txt")
 MODEL_SAVE_PATH = os.getenv("MODEL_SAVE_PATH", "test_output/models/unet.pth")
+
 
 print("Hyperparameters:")
 print(f"  OPTIMIZER: {OPTIMIZER}")
@@ -108,7 +109,7 @@ def main():
         parser.add_argument("--loss_fucntion", default=LOSS, type=str, help="loss fucntion")
         parser.add_argument("--optimizer", default=OPTIMIZER, type=str, help="optimization")
         parser.add_argument("--lr", default=LR, type=float, help="initial learning rate")
-        parser.add_argument("--num_epochs", default=5, type=int, help="Number of epochs")
+        parser.add_argument("--num_epochs", default=NUM_EPOCHS, type=int, help="Number of epochs")
 
         parser.add_argument(
             "--logs_file_path", default=LOGS_FILE_PATH, type=str, help="path to save logs"
@@ -230,6 +231,7 @@ def main():
     train_loss = []
     valid_loss = []
 
+
     # open the logs file
     with open(config["logs_file_path"], "a+") as logs_file:
         # train model for 40 epochs
@@ -242,30 +244,24 @@ def main():
 
             train_accuracy.append(train_logs["accuracy"])
             valid_accuracy.append(valid_logs["accuracy"])
-            train_loss.append(train_logs["focal_tversky_loss_weighted"])
-            valid_loss.append(valid_logs["focal_tversky_loss_weighted"])
+            # Find the matching loss function key in logs
+            train_loss_key = get_matching_loss_key(train_logs, config["loss_fucntion"])
+            valid_loss_key = get_matching_loss_key(valid_logs, config["loss_fucntion"])
 
-            # print train and validation logs
-            print(
-                f"{train_logs['focal_tversky_loss_breast']}"
-                f"\t {train_logs['focal_tversky_loss_dense']}"
-                f"\t {train_logs['focal_tversky_loss_weighted']}"
-                f"\t {i}"
-                f"\t {train_logs['precision']}"
-                f"\t {train_logs['recall']}"
-                f"\t {train_logs['accuracy']}"
-                f"\t {train_logs['fscore']}"
-                f"\t {train_logs['iou_score']}"
-                f"\t {valid_logs['focal_tversky_loss_breast']}"
-                f"\t {valid_logs['focal_tversky_loss_dense']}"
-                f"\t {valid_logs['focal_tversky_loss_weighted']}"
-                f"\t {valid_logs['precision']}"
-                f"\t {valid_logs['recall']}"
-                f"\t {valid_logs['accuracy']}"
-                f"\t {valid_logs['fscore']}"
-                f"\t {valid_logs['iou_score']}",
-                file=logs_file,
-            )
+            # Check if the loss keys were found and append them
+            if train_loss_key:
+                train_loss.append(train_logs[train_loss_key])
+            if valid_loss_key:
+                valid_loss.append(valid_logs[valid_loss_key])
+
+            # Print train and validation logs
+            log_line = f"{config['loss_fucntion']}:"
+            for key, value in train_logs.items():
+                log_line += f"\t {key} - {value}"
+            for key, value in valid_logs.items():
+                log_line += f"\t {key} - {value}"
+            log_line += f"\t Epoch: {i}"
+            print(log_line, file=logs_file)
 
             # do something (save model, change lr, etc.)
             if max_score < valid_logs["iou_score"]:
@@ -296,6 +292,11 @@ def main():
     plt.legend()
     plt.show()
 
+def get_matching_loss_key(logs, loss_config_name):
+    for key in logs.keys():
+        if loss_config_name.lower() in key.lower():
+            return key
+    return None
 
 if __name__ == "__main__":
     main()
