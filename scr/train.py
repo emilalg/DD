@@ -10,6 +10,7 @@ It saves the logs and model in the specified path.
 
 # importing libraries
 import argparse  # for command line arguments
+import re
 import torch  # for deep learning
 import torch.optim as optim  # for optimization
 import torch.nn as nn  # for neural network
@@ -242,17 +243,16 @@ def main():
             train_logs = train_epoch.run(train_dataloader)
             valid_logs = valid_epoch.run(valid_dataloader)
 
+             # Generate the dynamic loss key
+            loss_key = get_loss_key(config["loss_fucntion"])
+
+
             train_accuracy.append(train_logs["accuracy"])
             valid_accuracy.append(valid_logs["accuracy"])
-            # Find the matching loss function key in logs
-            train_loss_key = get_matching_loss_key(train_logs, config["loss_fucntion"])
-            valid_loss_key = get_matching_loss_key(valid_logs, config["loss_fucntion"])
 
-            # Check if the loss keys were found and append them
-            if train_loss_key:
-                train_loss.append(train_logs[train_loss_key])
-            if valid_loss_key:
-                valid_loss.append(valid_logs[valid_loss_key])
+            # Append loss values dynamically
+            train_loss.append(train_logs[loss_key])
+            valid_loss.append(valid_logs[loss_key])
 
             # Print train and validation logs
             log_line = f"{config['loss_fucntion']}:"
@@ -272,6 +272,7 @@ def main():
     # Plot accuracy and loss curves
     epochs = range(1, config["num_epochs"] + 1)
 
+    print(len(epochs), len(train_loss), len(valid_loss))
     # Plot accuracy
     plt.plot(epochs, train_accuracy, label="Train Accuracy")
     plt.plot(epochs, valid_accuracy, label="Validation Accuracy")
@@ -292,11 +293,13 @@ def main():
     plt.legend()
     plt.show()
 
-def get_matching_loss_key(logs, loss_config_name):
-    for key in logs.keys():
-        if loss_config_name.lower() in key.lower():
-            return key
-    return None
+def camel_to_snake(name):
+    name = re.sub('(.)([A-Z][a-z]+)', r'\1_\2', name)
+    return re.sub('([a-z0-9])([A-Z])', r'\1_\2', name).lower()
+
+def get_loss_key(loss_name):
+    key_base = camel_to_snake(loss_name[:-4])
+    return key_base + "_loss_weighted"
 
 if __name__ == "__main__":
     main()
