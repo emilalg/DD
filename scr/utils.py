@@ -58,7 +58,7 @@ from dotenv import load_dotenv
 """
 Legacy code for splitting training data. (Potential for repurpose?)
 """
-import splitfolders
+#import splitfolders
 
 def load_env():
     current_directory = os.path.dirname(os.path.abspath(__file__))

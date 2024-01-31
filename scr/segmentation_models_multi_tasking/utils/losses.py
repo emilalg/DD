@@ -41,6 +41,46 @@ class DiceLoss(base.Loss):
             threshold=None,
             ignore_channels=self.ignore_channels,
         )
+    
+class DSCPlusPlusLoss(base.Loss):
+    def __init__(self, eps=1e-5, beta=1., gamma=1.0, activation=None, ignore_channels=None):
+        super().__init__()
+        self.eps = eps
+        self.beta = beta
+        self.gamma = gamma
+        self.activation = Activation(activation)
+        self.ignore_channels = ignore_channels
+
+    def forward(self, y_pr, y_gt):
+        y_pr = self.activation(y_pr)
+
+        C = y_pr.size(1)  # Number of classes
+        loss = 0.0
+
+        for c in range(C):
+            if self.ignore_channels is not None and c in self.ignore_channels:
+                continue
+
+            y_true_c = y_gt[:, c, ...]
+            y_pred_c = y_pr[:, c, ...]
+
+            tp = torch.sum(y_pred_c * y_true_c, dim=[0, 1, 2])
+            fp = torch.sum(y_pred_c * (1 - y_true_c), dim=[0, 1, 2])
+            fn = torch.sum((1 - y_pred_c) * y_true_c, dim=[0, 1, 2])
+
+            fp = fp * ((1 - y_true_c) ** self.gamma)
+            fn = fn * ((1 - y_pred_c) ** self.gamma)
+
+            numerator = (1 + self.beta ** 2) * tp + self.eps
+            denominator = (1 + self.beta ** 2) * tp + self.beta ** 2 * fn + fp + self.eps
+
+            class_loss = 1 - numerator / denominator
+            loss += class_loss
+
+        final_loss = loss.mean()  # Reducing the loss to a scalar
+        print(f"final loss shape: {final_loss.shape}")  # Debugging
+        return final_loss
+
 
 class TverskyLoss(base.Loss):
 
