@@ -5,6 +5,9 @@ from . import functional as F
 # Importing the 'Activation' class from a 'modules' sub-package located one level up in the package hierarchy.
 from ..base.modules import Activation
 
+import torch.nn as nn
+import torch
+
 # IoU (Intersection over Union) is a metric for object detection and segmentation tasks.
 # It computes the ratio of the area of overlap (intersection) between the predicted segmentation and the ground truth 
 # to the area encompassed by both (union). IoU values range from 0 (no overlap) to 1 (perfect overlap).
@@ -125,3 +128,42 @@ class Precision(base.Metric):
             threshold=self.threshold,
             ignore_channels=self.ignore_channels,
         )
+
+
+class L1Loss(base.Loss):
+    def __init__(self, eps=1e-7, beta=1.0, gamma=2.5, activation=None, ignore_channels=None):
+        super().__init__()
+        self.eps = eps
+        self.beta = beta
+        self.gamma = gamma
+        self.activation = Activation(activation)
+        self.ignore_channels = ignore_channels
+
+    def forward(self, y_pr, y_gt):
+        y_pr = self.activation(y_pr)
+
+        C = y_pr.size(1)  # Number of classes
+        loss = 0.0
+
+        for c in range(C):
+            if self.ignore_channels is not None and c in self.ignore_channels:
+                continue
+
+            y_true_c = y_gt[:, c, ...]
+            y_pred_c = y_pr[:, c, ...]
+
+            tp = torch.sum(y_pred_c * y_true_c, dim=[0, 1, 2])
+            fp = torch.sum(y_pred_c * (1 - y_true_c), dim=[0, 1, 2])
+            fn = torch.sum((1 - y_pred_c) * y_true_c, dim=[0, 1, 2])
+
+            fp = fp * ((1 - y_true_c) ** self.gamma)
+            fn = fn * ((1 - y_pred_c) ** self.gamma)
+
+            numerator = (1 + self.beta**2) * tp + self.eps
+            denominator = (1 + self.beta**2) * tp + self.beta**2 * fn + fp + self.eps
+
+            class_loss = 1 - numerator / denominator
+            loss += class_loss
+
+        final_loss = loss.mean()  # Reducing the loss to a scalar
+        return final_loss
