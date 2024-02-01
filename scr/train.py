@@ -179,6 +179,7 @@ def main():
 
     # define metrics which will be monitored during training
     metrics = [
+        smp.utils.metrics.L1Loss(),
         smp.utils.metrics.Precision(),
         smp.utils.metrics.Recall(),
         smp.utils.metrics.Accuracy(),
@@ -235,8 +236,6 @@ def main():
 
     # open the logs file
     with open(config["logs_file_path"], "a+") as logs_file:
-        # train model for 40 epochs
-
         max_score = 0
         for i in range(0, config["num_epochs"]):
             print("\nEpoch: {}".format(i))
@@ -282,6 +281,7 @@ def main():
     plt.title("Accuracy Curve")
     plt.legend()
     plt.show()
+    plt.savefig("accuracy.png")
 
     # Plot loss
     plt.plot(epochs, train_loss, label="Train Loss")
@@ -292,7 +292,8 @@ def main():
     plt.title("Loss Curve")
     plt.legend()
     plt.show()
-
+    plt.savefig("loss.png")
+    
 def camel_to_snake(name):
     name = re.sub('(.)([A-Z][a-z]+)', r'\1_\2', name)
     return re.sub('([a-z0-9])([A-Z])', r'\1_\2', name).lower()

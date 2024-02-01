@@ -14,6 +14,7 @@ import torch.nn as nn
 from dataset import MammoDataset
 from torch.utils.data import DataLoader
 import segmentation_models_multi_tasking as smp
+from sklearn.metrics import mean_absolute_error
 
 LOSS = 'FocalTverskyLoss' # change the results log ['DiceLoss', 'TverskyLoss', 'FocalTverskyLoss', 'BCEWithLogitsLoss']
 
@@ -65,6 +66,7 @@ loss = getattr(smp.utils.losses, config['loss_fucntion'])()
 
 # metrics are used to evaluate the model performance
 metrics = [
+    nn.L1Loss(),
     smp.utils.metrics.Precision(),
     smp.utils.metrics.Recall(),
     smp.utils.metrics.Accuracy(),
