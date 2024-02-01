@@ -38,8 +38,9 @@ VALID_BATCH_SIZE = int(os.getenv("VALID_BATCH_SIZE", 4))
 ACTIVATION_FUNCTION = os.getenv("ACTIVATION_FUNCTION", "sigmoid")  # 'sigmoid', 'softmax'
 PRETRAINED_WEIGHTS = os.getenv("PRETRAINED_WEIGHTS", None)
 DATA_PATH = os.getenv("DATA_PATH", "../breast-density-prediction/train/train")
-LOGS_FILE_PATH = os.getenv("LOGS_FILE_PATH", "test_output/logs/unet.txt")
-MODEL_SAVE_PATH = os.getenv("MODEL_SAVE_PATH", "test_output/models/unet.pth")
+# LOGS_FILE_PATH = os.getenv("LOGS_FILE_PATH", "test_output/logs/unet.txt")
+# MODEL_SAVE_PATH = os.getenv("MODEL_SAVE_PATH", "test_output/models/unet.pth")
+MODEL_NAME = os.getenv("MODEL_NAME", "double_d")
 
 
 print("Hyperparameters:")
@@ -56,8 +57,8 @@ print(f"  VALID_BATCH_SIZE: {VALID_BATCH_SIZE}")
 print(f"  ACTIVATION_FUNCTION: {ACTIVATION_FUNCTION}")
 print(f"  PRETRAINED_WEIGHTS: {PRETRAINED_WEIGHTS}")
 print(f"  DATA_PATH: {DATA_PATH}")
-print(f"  LOGS_FILE_PATH: {LOGS_FILE_PATH}")
-print(f"  MODEL_SAVE_PATH: {MODEL_SAVE_PATH}")
+# print(f"  LOGS_FILE_PATH: {LOGS_FILE_PATH}")
+# print(f"  MODEL_SAVE_PATH: {MODEL_SAVE_PATH}")
 
 """
 Function to parse command line arguments
@@ -113,11 +114,15 @@ def main():
         parser.add_argument("--num_epochs", default=NUM_EPOCHS, type=int, help="Number of epochs")
 
         parser.add_argument(
-            "--logs_file_path", default=LOGS_FILE_PATH, type=str, help="path to save logs"
-        )  # change here
-        parser.add_argument(
-            "--model_save_path", default=MODEL_SAVE_PATH, type=str, help="path to save the model"
-        )  # change her
+            "--model_name", default=MODEL_NAME, type=str, help="name of the model (used for saving all related data)"
+        )  
+
+        # parser.add_argument(
+        #     "--logs_file_path", default=LOGS_FILE_PATH, type=str, help="path to save logs"
+        # )  # change here
+        # parser.add_argument(
+        #     "--model_save_path", default=MODEL_SAVE_PATH, type=str, help="path to save the model"
+        # )  # change her
 
         config = parser.parse_args()  # parse the arguments and store it in config object
 
@@ -130,11 +135,11 @@ def main():
     # set random seeds for reproducibility
     torch.manual_seed(1990)
 
-    train_set, val_set, test_set = get_dataset_splits(path=os.path.join(os.path.dirname(__file__), DATA_PATH))
+    train_set, val_set, test_set = get_dataset_splits(path=os.path.join(os.path.dirname(__file__), DATA_PATH), model_name=MODEL_NAME)
 
     # create dataset and dataloader
     train_dataset = MammoDataset(
-        path=os.path.join(os.path.dirname(__file__), DATA_PATH),
+        path=os.path.join(os.path.dirname(__file__), config['data_path']),
         filenames=train_set,
         augmentations=None,
     )
@@ -144,7 +149,7 @@ def main():
 
     # create validation dataset and dataloader
     valid_dataset = MammoDataset(
-        path=os.path.join(os.path.dirname(__file__), DATA_PATH),
+        path=os.path.join(os.path.dirname(__file__), config['data_path']),
         filenames=val_set,
         augmentations=None,
     )
@@ -179,6 +184,7 @@ def main():
 
     # define metrics which will be monitored during training
     metrics = [
+        smp.utils.metrics.L1Loss(),
         smp.utils.metrics.Precision(),
         smp.utils.metrics.Recall(),
         smp.utils.metrics.Accuracy(),
@@ -234,9 +240,7 @@ def main():
 
 
     # open the logs file
-    with open(config["logs_file_path"], "a+") as logs_file:
-        # train model for 40 epochs
-
+    with open(f"test_output/logs/{MODEL_NAME}.txt", "a+") as logs_file:
         max_score = 0
         for i in range(0, config["num_epochs"]):
             print("\nEpoch: {}".format(i))
@@ -266,7 +270,7 @@ def main():
             # do something (save model, change lr, etc.)
             if max_score < valid_logs["iou_score"]:
                 max_score = valid_logs["iou_score"]
-                torch.save(model, config["model_save_path"])
+                torch.save(model, f"test_output/models/{MODEL_NAME}.pth")
                 print("Model saved!")
 
     # Plot accuracy and loss curves
@@ -281,7 +285,8 @@ def main():
     plt.ylabel("Accuracy")
     plt.title("Accuracy Curve")
     plt.legend()
-    plt.show()
+    #plt.show() # why are these blocking?
+    plt.savefig(f"test_output/logs/{MODEL_NAME}_accuracy.jpg")
 
     # Plot loss
     plt.plot(epochs, train_loss, label="Train Loss")
@@ -291,8 +296,9 @@ def main():
     plt.ylabel("Loss")
     plt.title("Loss Curve")
     plt.legend()
-    plt.show()
-
+    #plt.show()
+    plt.savefig(f"test_output/logs/{MODEL_NAME}_loss.jpg")
+    
 def camel_to_snake(name):
     name = re.sub('(.)([A-Z][a-z]+)', r'\1_\2', name)
     return re.sub('([a-z0-9])([A-Z])', r'\1_\2', name).lower()
