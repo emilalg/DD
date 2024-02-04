@@ -2,9 +2,11 @@ name: innovaatio
 channels:
   - pytorch
   - defaults
+  - conda-forge
 dependencies:
   - _libgcc_mutex=0.1=main
   - _openmp_mutex=5.1=1_gnu
+  - alembic=1.8.1=py38h06a4308_0
   - blas=1.0=mkl
   - brotli-python=1.0.9=py38h6a678d5_7
   - bzip2=1.0.8=h7b6447c_0
@@ -12,6 +14,7 @@ dependencies:
   - certifi=2023.11.17=py38h06a4308_0
   - cffi=1.16.0=py38h5eee18b_0
   - charset-normalizer=2.0.4=pyhd3eb1b0_0
+  - colorlog=5.0.1=py38h06a4308_1
   - cpuonly=2.0=0
   - cryptography=41.0.7=py38hdda0065_0
   - ffmpeg=4.3=hf484d3e_0
@@ -21,7 +24,10 @@ dependencies:
   - gmp=6.2.1=h295c915_3
   - gmpy2=2.1.2=py38heeb90bb_0
   - gnutls=3.6.15=he1e5248_0
+  - greenlet=3.0.1=py38h6a678d5_0
   - idna=3.4=py38h06a4308_0
+  - importlib-metadata=7.0.1=py38h06a4308_0
+  - importlib_resources=6.1.1=py38h06a4308_1
   - intel-openmp=2023.1.0=hdb19cb5_46306
   - jinja2=3.1.2=py38h06a4308_0
   - jpeg=9e=h5eee18b_1
@@ -43,6 +49,7 @@ dependencies:
   - libwebp=1.3.2=h11a3e52_0
   - libwebp-base=1.3.2=h5eee18b_0
   - lz4-c=1.9.4=h6a678d5_0
+  - mako=1.2.3=py38h06a4308_0
   - markupsafe=2.1.3=py38h5eee18b_0
   - mkl=2023.1.0=h213fc3f_46344
   - mkl-service=2.4.0=py38h5eee18b_1
@@ -58,28 +65,36 @@ dependencies:
   - numpy-base=1.24.3=py38h060ed82_1
   - openh264=2.1.1=h4ff587b_0
   - openjpeg=2.4.0=h3ad879b_0
-  - openssl=3.0.12=h7f8727e_0
+  - openssl=3.0.13=h7f8727e_0
+  - optuna=3.5.0=pyhd8ed1ab_0
   - pillow=10.0.1=py38ha6cbd5a_0
   - pip=23.3.1=py38h06a4308_0
   - pycparser=2.21=pyhd3eb1b0_0
   - pyopenssl=23.2.0=py38h06a4308_0
   - pysocks=1.7.1=py38h06a4308_0
   - python=3.8.18=h955ad1f_0
+  - python-dateutil=2.8.2=pyhd3eb1b0_0
   - pytorch=2.0.1=py3.8_cpu_0
   - pytorch-mutex=1.0=cpu
+  - pyyaml=6.0.1=py38h5eee18b_0
   - readline=8.2=h5eee18b_0
   - requests=2.31.0=py38h06a4308_0
   - setuptools=68.2.2=py38h06a4308_0
+  - six=1.16.0=pyhd3eb1b0_1
+  - sqlalchemy=1.4.51=py38h5eee18b_0
   - sqlite=3.41.2=h5eee18b_0
   - sympy=1.12=py38h06a4308_0
   - tbb=2021.8.0=hdb19cb5_0
   - tk=8.6.12=h1ccaba5_0
   - torchaudio=2.0.2=py38_cpu
   - torchvision=0.15.2=py38_cpu
+  - tqdm=4.65.0=py38hb070fc8_0
   - typing_extensions=4.9.0=py38h06a4308_0
   - urllib3=1.26.18=py38h06a4308_0
   - wheel=0.41.2=py38h06a4308_0
   - xz=5.4.5=h5eee18b_0
+  - yaml=0.2.5=h7b6447c_0
+  - zipp=3.17.0=py38h06a4308_0
   - zlib=1.2.13=h5eee18b_0
   - zstd=1.5.5=hc292b87_0
   - pip:
@@ -91,7 +106,6 @@ dependencies:
       - fsspec==2023.12.2
       - huggingface-hub==0.20.2
       - imageio==2.33.1
-      - importlib-resources==6.1.1
       - inplace-abn==1.1.0
       - joblib==1.3.2
       - kiwisolver==1.4.5
@@ -104,17 +118,13 @@ dependencies:
       - packaging==23.2
       - pretrainedmodels==0.7.4
       - pyparsing==3.1.1
-      - python-dateutil==2.8.2
+      - python-dotenv==1.0.1
       - pywavelets==1.4.1
-      - pyyaml==6.0.1
       - qudida==0.0.4
       - safetensors==0.4.1
       - scikit-image==0.21.0
       - scikit-learn==1.3.2
       - scipy==1.10.1
-      - six==1.16.0
       - threadpoolctl==3.2.0
       - tifffile==2023.7.10
       - timm==0.6.13
-      - tqdm==4.65.0
-      - zipp==3.17.0
