@@ -156,3 +156,33 @@ def binary_cross_entropy_with_logits(pr, gt, threshold=None, ignore_channels=Non
     pr, gt = _take_channels(pr, gt, ignore_channels=ignore_channels)
 
     return F2.binary_cross_entropy_with_logits(gt, pr)
+
+def softmax(input, dim=1):
+    """
+    Apply the softmax function to an input tensor along a specified dimension.
+
+    The softmax function is an activation function that turns the raw output (logits) of a network 
+    into a probability distribution. It converts each element of the input tensor to a value 
+    between 0 and 1, and ensures that the sum of these softmax outputs across the specified 
+    dimension (usually the channel dimension in a classification task) is 1. This characteristic 
+    makes it useful for multi-class classification problems where outputs are interpreted as 
+    probabilities of belonging to each class.
+
+    Args:
+        input (torch.Tensor): The input tensor on which the softmax function is to be applied. 
+                              This tensor typically represents the raw output (logits) from a 
+                              network's layer.
+
+        dim (int, optional): The dimension along which the softmax function will be applied. 
+                             For example, if `dim=1` in a typical classification problem, the softmax 
+                             will be applied across the channel dimension, ensuring that the softmax 
+                             outputs for each class sum to 1 for each data point in the batch.
+                             Defaults to 1.
+
+    Returns:
+        torch.Tensor: A tensor with the same shape as the input, but with softmax applied to the 
+                      specified dimension. Each element in this tensor represents the probability 
+                      of the input belonging to a particular class, in the context of a classification 
+                      task.
+    """
+    return F2.softmax(input, dim)
