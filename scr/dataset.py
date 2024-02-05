@@ -135,13 +135,11 @@ class MammoDataset(Dataset):
         # Slightly modifes the images to increase the size of training data.
         # Example: A.ShiftScaleRotate(p = 0.5) randomly apploes translate,scale and rotate to the input. 0.5 is the probability of applying the transform.
         #https://albumentations.ai/
-        self.aug_pipeline = A.Compose([A.ShiftScaleRotate(p = 0.5),
-                                       A.HorizontalFlip(0.5),
-                                       A.VerticalFlip(0.5),
-                                       A.RandomBrightnessContrast(0.5),
-                                       A.GaussNoise(p = 0.5),
-                                       A.GaussianBlur(p=0.5),
-                                       A.ElasticTransform(),],p=0.8)
+        self.aug_pipeline = A.Compose([A.ShiftScaleRotate(),
+                                       A.HorizontalFlip(),
+                                       A.VerticalFlip(),
+                                       A.GaussNoise(),
+                                       A.GaussianBlur(),],p=0.5)
 
         # Read image
         self.image = cv2.imread(self.images[index], 1)

@@ -19,6 +19,7 @@ from dataset import MammoDataset, get_dataset_splits  # for loading dataset
 import segmentation_models_multi_tasking as smp  # for segmentation model
 import matplotlib.pyplot as plt  # for plotting graphs
 import os
+import datetime
 from utils import load_env
 
 
@@ -277,6 +278,15 @@ def main():
     # Plot accuracy and loss curves
     epochs = range(1, config["num_epochs"] + 1)
 
+    timestamp = datetime.datetime.now().strftime("%d-%m_%H-%M")
+
+    accuracyDir = "test_output/logs/accuracy/"
+    lossDir = "test_output/logs/loss"
+    if not os.path.exists(accuracyDir):
+        os.makedirs(accuracyDir)
+    if not os.path.exists(lossDir):
+        os.makedirs(lossDir)
+
     print(len(epochs), len(train_loss), len(valid_loss))
     # Plot accuracy
     plt.plot(epochs, train_accuracy, label="Train Accuracy")
@@ -286,9 +296,9 @@ def main():
     plt.ylabel("Accuracy")
     plt.title("Accuracy Curve")
     plt.legend()
-    #plt.show() # why are these blocking?
-    plt.savefig(f"test_output/logs/{MODEL_NAME}_accuracy.jpg")
-
+    # Savefig needs to be called first before show since closing the plt.show() image causes it to be freed from memory
+    plt.savefig(f"test_output/logs/accuracy/{MODEL_NAME}_accuracy_{timestamp}.jpg")
+    plt.show()
     # Plot loss
     plt.plot(epochs, train_loss, label="Train Loss")
     plt.plot(epochs, valid_loss, label="Validation Loss")
@@ -297,8 +307,8 @@ def main():
     plt.ylabel("Loss")
     plt.title("Loss Curve")
     plt.legend()
-    #plt.show()
-    plt.savefig(f"test_output/logs/{MODEL_NAME}_loss.jpg")
+    plt.savefig(f"test_output/logs/loss/{MODEL_NAME}_loss_{timestamp}.jpg")
+    plt.show()
     
 def camel_to_snake(name):
     name = re.sub('(.)([A-Z][a-z]+)', r'\1_\2', name)
