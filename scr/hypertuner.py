@@ -273,6 +273,7 @@ class hypertuner:
 def main():
     ht = hypertuner()
     study = optuna.create_study()
+    # some params to improve the search efficiency perhaps ? :)
     study.optimize(ht.run, n_trials=2)
     print(study.best_params)
 
