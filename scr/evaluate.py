@@ -87,7 +87,7 @@ print(config)
 
 # 2. First get the path to the dataset, then load the dataset using Torch's DataLoader
 # get the test set
-test_set = construct_test_set(path=config['data_path'], model_name=config['model_name'])
+test_set = construct_test_set(model_name=config['model_name'])
 
 test_dataset = MammoDataset(
         path=os.path.join(os.path.dirname(__file__), config['data_path']),

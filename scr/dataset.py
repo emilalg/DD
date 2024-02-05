@@ -18,7 +18,7 @@ from collections import namedtuple
 SplitRatios = namedtuple('SplitRatios', ['train', 'valid', 'test'])
 split_ratios = SplitRatios(train=0.8, valid=0.1, test=0.1)
 
-def save_files_for_evaluation (path, model_name, whole_dataset, train_set, val_set, test_set, generator=torch.Generator().manual_seed(42)):
+def save_files_for_evaluation (model_name, whole_dataset, train_set, val_set, test_set, generator=torch.Generator().manual_seed(42)):
     train_set_files = [os.path.basename(whole_dataset[i]) for i in train_set.indices]
     val_set_files = [os.path.basename(whole_dataset[i]) for i in val_set.indices]
     test_set_files = [os.path.basename(whole_dataset[i]) for i in test_set.indices]
@@ -62,7 +62,7 @@ def get_dataset_splits(path, model_name, split_ratios=split_ratios, generator=to
     # train_set, val_set, test_set = split_orderly(whole_dataset, split_ratios)
     
     # save the split to a file. maybe it will be used for evaluation
-    save_files_for_evaluation(path, model_name, whole_dataset, train_set, val_set, test_set, generator)
+    save_files_for_evaluation(model_name, whole_dataset, train_set, val_set, test_set, generator)
     # convert train_set and val_set to list of filenames
     train_set = [os.path.basename(whole_dataset[i]) for i in train_set.indices]
     val_set = [os.path.basename(whole_dataset[i]) for i in val_set.indices]
@@ -70,7 +70,7 @@ def get_dataset_splits(path, model_name, split_ratios=split_ratios, generator=to
     
     return (train_set, val_set, test_set)
 
-def construct_test_set(path, model_name):
+def construct_test_set(model_name):
     with open(f"test_output/logs/{model_name}_splits.txt", 'r') as f:
         # read untl you get to Test: 
         # then read every line ending .jpg and append to test_set
