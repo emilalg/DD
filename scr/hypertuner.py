@@ -181,16 +181,13 @@ class hypertuner:
     def run(self, trial):
         config = copy.deepcopy(self.config)
         DEVICE = self.DEVICE
-
         dl_train = self.data["train"]["dataloader"]
         dl_valid = self.data["valid"]["dataloader"]
 
-
-
         # Now we modify the hyper params in the config with Optuna
         # These are passed through the trial parameter
-        config["optimizer"] = trial.suggest_categorical("optimizer", ["ADAM", "SGD"])
-
+        config["optimizer"] = trial.suggest_categorical("optimizer", ["Adam", "SGD"])
+        config["loss_fucntion"] = trial.suggest_categorical("loss", ['DiceLoss', 'TverskyLoss', 'FocalTverskyLoss'])
 
 
         print(f'Executing with config {config}')
@@ -230,6 +227,7 @@ class hypertuner:
         # steplr: Decay the learning rate by gamma every step_size epochs.
         # reducelr: Reduce learning rate when a metric has stopped improving.
         # cosineannealinglr: Cosine annealing scheduler. if T_max (max_iter) is reached, the learning rate is annealed linearly to zero.
+        # not in argparser, todo?
         if LR_SCHEDULE == "steplr":
             lr_schedular = optim.lr_scheduler.StepLR(optimizer, step_size=100, gamma=0.5)
         elif LR_SCHEDULE == "reducelr":
@@ -272,10 +270,27 @@ class hypertuner:
 
 def main():
     ht = hypertuner()
-    study = optuna.create_study()
+    # we can make a study deterministic by assigning a custom sampler with a set seed
+    # does not feel necessary atm
+    study = optuna.create_study(direction='maximize')
     # some params to improve the search efficiency perhaps ? :)
-    study.optimize(ht.run, n_trials=2)
+    # defaults look ok
+    study.optimize(ht.run, n_trials=10)
     print(study.best_params)
+    
+    # output all trials
+    outfile = open(f"test_output/logs/hypertuner.txt", "w") 
+    trials = study.get_trials()
+    for trial in trials:
+        out = {
+            "trial_nro": trial.number,
+            "accuracy": trial.value,
+            "start_date" : trial.datetime_start,
+            "end_date" : trial.datetime_complete,
+            "parameters" : trial.params
+        }
+        outfile.write(str(out))
+    outfile.close()
 
     
 
