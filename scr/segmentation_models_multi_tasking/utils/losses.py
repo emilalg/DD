@@ -107,9 +107,8 @@ class TverskyLoss(base.Loss):
 
 
 class FocalTverskyLoss(base.Loss):
-    def __init__(
-        self, alpha=0.3, eps=1.0, beta=0.7, gamma=0.75, activation=None, ignore_channels=None, **kwargs
-    ):
+
+    def __init__(self, alpha=0.7,  eps=1., beta=0.3, gamma=0.75,  activation=None, ignore_channels=None, **kwargs):
         super().__init__(**kwargs)
         self.eps = eps
         self.alpha = alpha
