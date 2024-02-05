@@ -11,6 +11,18 @@ task: semantic_segmentation # Deep learning task. Should either be `classificati
 policy_model:
 # Configuration for Policy model which is used to augment input images.
 
+  operations:
+  - _target_: autoalbument.faster_autoaugment.models.policy_operations.ShiftRGB
+    shift_r: true
+    temperature: 0.05
+  - _target_: autoalbument.faster_autoaugment.models.policy_operations.ShiftRGB
+    shift_g: true
+    temperature: 0.05
+  - _target_: autoalbument.faster_autoaugment.models.policy_operations.ShiftRGB
+    shift_b: true
+    temperature: 0.05
+
+
   num_sub_policies: 40
 # Number of augmentation sub-policies. When an image passes through an augmentation pipeline, Faster AutoAugment
 # randomly chooses one sub-policy and uses augmentations from that sub-policy to transform an input image. A larger
@@ -31,7 +43,7 @@ semantic_segmentation_model:
 # 1. As a model that performs semantic segmentation of input images.
 # 2. As a Discriminator for Policy Model.
 
-  num_classes: 7
+  num_classes: 2
 # The number of classes in the dataset. The dataset implementation should return a mask as a NumPy array with
 # the shape [height, width, num_classes]. In a case of binary segmentation you can set `num_classes` to 1.
 
