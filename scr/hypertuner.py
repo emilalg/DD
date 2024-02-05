@@ -22,6 +22,7 @@ import os
 from utils import load_env
 import optuna
 import copy
+import json
 
 """These are the default parameters. Do not modify them here. instead create .env file in project root or use command line arguments!"""
 load_env()
@@ -188,7 +189,7 @@ class hypertuner:
         # These are passed through the trial parameter
         config["optimizer"] = trial.suggest_categorical("optimizer", ["Adam", "SGD"])
         config["loss_fucntion"] = trial.suggest_categorical("loss", ['DiceLoss', 'TverskyLoss', 'FocalTverskyLoss'])
-
+        config["lr"] = trial.suggest_float('lr', 0.00001, 0.0001, log=True)
 
         print(f'Executing with config {config}')
         # create segmentation model with pretrained encoder
@@ -279,8 +280,8 @@ def main():
     print(study.best_params)
     
     # output all trials
-    outfile = open(f"test_output/logs/hypertuner.txt", "w") 
     trials = study.get_trials()
+    outfile = open(f"test_output/logs/hypertuner.txt", "w+") 
     for trial in trials:
         out = {
             "trial_nro": trial.number,
@@ -289,7 +290,9 @@ def main():
             "end_date" : trial.datetime_complete,
             "parameters" : trial.params
         }
-        outfile.write(str(out))
+        outfile.write(json.dumps(out, default=str))
+        outfile.write('\n')
+    outfile.write(f'\nBest parameters: {json.dumps(study.best_params, default=str)}')
     outfile.close()
 
     
