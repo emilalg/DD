@@ -10,21 +10,13 @@ policy_model:
   operations:
   - _target_: autoalbument.faster_autoaugment.models.policy_operations.ShiftRGB
     shift_r: true
+    temperature: 0.05
   - _target_: autoalbument.faster_autoaugment.models.policy_operations.ShiftRGB
     shift_g: true
+    temperature: 0.05
   - _target_: autoalbument.faster_autoaugment.models.policy_operations.ShiftRGB
     shift_b: true
-  - _target_: autoalbument.faster_autoaugment.models.policy_operations.RandomBrightness
-  - _target_: autoalbument.faster_autoaugment.models.policy_operations.RandomContrast
-  - _target_: autoalbument.faster_autoaugment.models.policy_operations.Solarize
-  - _target_: autoalbument.faster_autoaugment.models.policy_operations.HorizontalFlip
-  - _target_: autoalbument.faster_autoaugment.models.policy_operations.VerticalFlip
-  - _target_: autoalbument.faster_autoaugment.models.policy_operations.Rotate
-  - _target_: autoalbument.faster_autoaugment.models.policy_operations.ShiftX
-  - _target_: autoalbument.faster_autoaugment.models.policy_operations.ShiftY
-  - _target_: autoalbument.faster_autoaugment.models.policy_operations.Scale
-  - _target_: autoalbument.faster_autoaugment.models.policy_operations.CutoutFixedNumberOfHoles
-  - _target_: autoalbument.faster_autoaugment.models.policy_operations.CutoutFixedSize
+    temperature: 0.05
 classification_model:
   _target_: autoalbument.faster_autoaugment.models.ClassificationModel
   num_classes: _MISSING_
@@ -32,7 +24,7 @@ classification_model:
   pretrained: false
 semantic_segmentation_model:
   _target_: autoalbument.faster_autoaugment.models.SemanticSegmentationModel
-  num_classes: 7
+  num_classes: 2
   architecture: Unet
   encoder_architecture: resnet18
   pretrained: true

@@ -5,10 +5,13 @@ import numpy as np
 import torch.utils.data
 from natsort import natsorted
 
+MODEL_NAME = os.getenv("MODEL_NAME", "double_d")
+
 class SearchDataset(torch.utils.data.Dataset):
 
-    def __init__(self, path, filenames, transform=None):
+    def __init__(self, path=0, filenames=0, transform=None):
         self.path = path
+        self.path = os.path.join(os.path.dirname(__file__), f"../../test_output/logs/{MODEL_NAME}_splits.txt")
         self.filenames = filenames
         self.filenames= ["00a6b0d56eb5136c1be2c3d624b04dad.jpg"]
         self.transform = transform
