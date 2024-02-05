@@ -98,7 +98,7 @@ test_dataloader = DataLoader(test_dataset, shuffle=True, batch_size =1, num_work
 
 # 3. Load the trained model
 # load best saved checkpoint
-model = torch.load(os.path.join(os.path.dirname(__file__), f'../test_output/models/{MODEL_NAME}.pth'))
+model = torch.load(f"test_output/models/{MODEL_NAME}.pth")
 model = nn.DataParallel(model.module)
 
 
