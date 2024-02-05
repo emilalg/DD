@@ -109,7 +109,16 @@ metrics = [
 ]
 
 # Device used for training. CUDA used an NVIDIA GPU and requires CUDA to be installed. CPU is not available here.
-DEVICE = 'cuda'
+if torch.cuda.is_available():
+    DEVICE = torch.device("cuda")
+# elif torch.backends.mps.is_available():
+#    DEVICE = torch.device("mps")
+#    PYTORCH_ENABLE_MPS_FALLBACK=1
+else:
+    DEVICE = torch.device("cpu")
+print(DEVICE)
+    
+    
 # Create evaluation object
 test_epoch = smp.utils.train.ValidEpoch(
     model=model,
@@ -120,6 +129,9 @@ test_epoch = smp.utils.train.ValidEpoch(
 
 # 5. Run the evaluation on the test set and save the results in a text file
 with open(f"test_output/evaluation/{MODEL_NAME}.txt", 'a+') as logs_file:
+    # Write headers to the file
+    print('Epoch \t Precision \t Recall \t Fscore \t Accuracy \t IOU_Score', file=logs_file)
+
     for i in range(0, config['num_epochs']):
         print('\nEpoch: {}'.format(i))
 
