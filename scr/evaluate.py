@@ -261,37 +261,33 @@ def visualize_segmentation_results(image_tensor, model, threshold=0.5):
 
     
 # Define the maximum number of images to show
-max_images_to_show = 5  # You can change this number as needed
+max_images_to_show = 1  # You can adjust this number as needed
+
+# Initialize a list to store images for later visualization
+images_to_visualize = []
 
 with open(f"test_output/evaluation/{MODEL_NAME}.txt", 'a+') as logs_file:
     for i, batch_data in enumerate(test_dataloader):
-        if i >= max_images_to_show:
-            break  # Stop displaying images after reaching the maximum
         print(f"Processing batch {i+1}/{len(test_dataloader)}...")
         try:
-            # Directly unpack the batch_data tuple into images, masks, and contours
+            # Unpack the batch_data
             images, masks, contours = batch_data
             images = images.to(DEVICE)
-            masks = masks.to(DEVICE) # If needed
+            masks = masks.to(DEVICE)  # If needed
             contours = contours.to(DEVICE)
 
             # Make predictions
             with torch.no_grad():
-                print("Making predictions...")
-
                 pred1, pred2 = model(images)
-                print("Predictions made.")
 
-            # Visualize segmentation results for each batch
-            print("Visualizing results...")
-            for img in images:
-                visualize_segmentation_results(img.cpu(), model)  # Update this function as needed
-            print("Visualizations completed.")
+            # Add first image of each batch to the visualization list (adjust logic as needed)
+            if len(images_to_visualize) < max_images_to_show:
+                images_to_visualize.append(images[0].cpu())  # Storing for visualization later
 
         except Exception as e:
             print(f"Error during evaluation: {e}")
 
-        # After all batches are processed, evaluate the performance on the entire test set
+        # Evaluate performance after all batches are processed
         if i == len(test_dataloader) - 1:
             print("Running final evaluation...")
             test_logs = test_epoch.run(test_dataloader)
@@ -304,5 +300,11 @@ with open(f"test_output/evaluation/{MODEL_NAME}.txt", 'a+') as logs_file:
             log_line += f"\t Epoch: {config['num_epochs']}"
 
             print(log_line, file=logs_file)
+
+# After evaluation and logging, visualize the stored images
+print("Visualizing results...")
+for img in images_to_visualize:
+    visualize_segmentation_results(img, model)  # Adjust this function as needed
+print("Visualizations completed.")
 
 print("Evaluation complete.")
