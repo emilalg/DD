@@ -203,61 +203,87 @@ def mask_to_rgba(mask, color="red", opacity=0.5):
         return np.stack((ones, zeros, ones, ones * opacity), axis=-1)
     elif color == "cyan":
         return np.stack((zeros, ones, ones, ones * opacity), axis=-1)
-    
-def visualize_segmentation_results(image_tensor, model, threshold=0.5):
+
+def read_log_results(logs_file_path):
+    with open(logs_file_path, 'r') as logs_file:
+        lines = logs_file.readlines()  # Read all lines into a list
+        return lines[-1]  # Return the last line
+       
+def visualize_evaluation_results(image_tensor, pred1, pred2, gt1, gt2, results_text, threshold=0.5):
     """
-    Visualizes the segmentation results by the model with thresholding and color overlay.
+    Visualizes the segmentation results by the model with thresholding and color overlay, alongside ground truth masks.
     
     Parameters:
     - image_tensor: A PyTorch tensor of the image to be visualized. 
-                    It should be in the shape of [C, H, W] and on the correct device.
-    - model: The PyTorch model used for prediction.
+    - pred1, pred2: Model predictions for breast area and density.
+    - gt1, gt2: Ground truth masks for breast area and density.
     - threshold: The threshold for converting probability maps to binary masks.
-    
-    The function assumes that the model's prediction method returns two tensors: pred1 and pred2,
-    which are the model's segmentation masks.
     """
     
-    print(f"Visualizing. Image shape: {image_tensor.shape}, Model type: {type(model)}")
+    # Apply threshold to convert predictions to binary masks
+    pred1_binary = (pred1 > threshold).float().squeeze().cpu().numpy()
+    pred2_binary = (pred2 > threshold).float().squeeze().cpu().numpy()
 
-    # Set the model to evaluation mode
-    model.eval()
+    # Convert ground truths to RGBA for visualization
+    gt1_colored = mask_to_rgba(gt1.squeeze().cpu().numpy(), color="cyan")
+    gt2_colored = mask_to_rgba(gt2.squeeze().cpu().numpy(), color="magenta")
 
-    # Use 'with torch.no_grad()' to avoid tracking history in autograd
-    with torch.no_grad():
-        # Forward pass through the model
-        predictions = model(image_tensor.unsqueeze(0))  # Add a batch dimension if needed
-        
-        pred1, pred2 = predictions
-
-        # Apply threshold to convert predictions to binary masks
-        pred1_binary = (pred1 > threshold).float()
-        pred2_binary = (pred2 > threshold).float()
-
-    # Convert the binary masks to RGBA where the mask is colored and the rest is transparent
-    pred1_colored = mask_to_rgba(pred1_binary.squeeze().cpu().numpy(), color="green")
-    pred2_colored = mask_to_rgba(pred2_binary.squeeze().cpu().numpy(), color="red")
+    # Convert predictions to RGBA for visualization
+    pred1_colored = mask_to_rgba(pred1_binary, color="green")
+    pred2_colored = mask_to_rgba(pred2_binary, color="red")
 
     # Convert the original image tensor to PIL for consistent visualization
     input_pil = to_pil_image(image_tensor.cpu())
 
     # Visualization
-    fig, axes = plt.subplots(1, 3, figsize=(20, 6))
-    axes[0].imshow(input_pil, cmap='gray')
-    axes[0].set_title('Original Image')
-    axes[0].axis('off')
+    fig, axes = plt.subplots(2, 3, figsize=(16, 9))
+    
+    # Original Image
+    axes[0, 0].imshow(input_pil, cmap='gray')
+    axes[0, 0].set_title('Original Image')
+    axes[0, 0].axis('off')
 
-    axes[1].imshow(input_pil, cmap='gray')
-    axes[1].imshow(pred1_colored, interpolation='none')
-    axes[1].set_title('Prediction 1 Overlay, Brest Tissue Mask')
-    axes[1].axis('off')
+    # Prediction Breast Area
+    axes[0, 1].imshow(input_pil, cmap='gray')
+    axes[0, 1].imshow(pred1_colored, interpolation='none')
+    axes[0, 1].set_title('Prediction: Breast Area')
+    axes[0, 1].axis('off')
 
-    axes[2].imshow(input_pil, cmap='gray')
-    axes[2].imshow(pred2_colored, interpolation='none')
-    axes[2].set_title('Prediction 2 Overlay, Density Mask')
-    axes[2].axis('off')
+    # Prediction Density
+    axes[0, 2].imshow(input_pil, cmap='gray')
+    axes[0, 2].imshow(pred2_colored, interpolation='none')
+    axes[0, 2].set_title('Prediction: Density')
+    axes[0, 2].axis('off')
+
+    # Ground Truth Breast Area
+    axes[1, 1].imshow(input_pil, cmap='gray')
+    axes[1, 1].imshow(gt1_colored, interpolation='none')
+    axes[1, 1].set_title('Ground Truth: Breast Area')
+    axes[1, 1].axis('off')
+
+    # Ground Truth Density
+    axes[1, 2].imshow(input_pil, cmap='gray')
+    axes[1, 2].imshow(gt2_colored, interpolation='none')
+    axes[1, 2].set_title('Ground Truth: Density')
+    axes[1, 2].axis('off')
+
+    # Format and display results text
+    axes[1, 0].clear()
+    axes[1, 0].axis('off')
+    results_lines = results_text.split('\t')  # Split the results text into separate lines
+
+    if results_lines:
+        results_lines = results_lines[1:]
+    
+    # Remove "dsc_plus_plus_" from the first three lines
+    for i in range(min(3, len(results_lines))):
+        results_lines[i] = results_lines[i].replace('dsc_plus_plus_', '')
+
+    formatted_text = '\n'.join(results_lines)
+    axes[1, 0].text(0.05, 0.75, formatted_text, ha='left', va='top', fontsize=12, wrap=True, transform=axes[1, 0].transAxes)
 
     plt.show()
+
 
     
 # Define the maximum number of images to show
@@ -265,24 +291,29 @@ max_images_to_show = 1  # You can adjust this number as needed
 
 # Initialize a list to store images for later visualization
 images_to_visualize = []
+ground_truths_breast_area = []  # List to store breast area ground truths
+ground_truths_density = []  # List to store density ground truths
+results_text = ''
 
 with open(f"test_output/evaluation/{MODEL_NAME}.txt", 'a+') as logs_file:
     for i, batch_data in enumerate(test_dataloader):
         print(f"Processing batch {i+1}/{len(test_dataloader)}...")
         try:
             # Unpack the batch_data
-            images, masks, contours = batch_data
+            images, gt_breast_area, gt_density = batch_data  # Adjusted to include ground truths
             images = images.to(DEVICE)
-            masks = masks.to(DEVICE)  # If needed
-            contours = contours.to(DEVICE)
+            gt_breast_area = gt_breast_area.to(DEVICE)  # Ground truth for breast area
+            gt_density = gt_density.to(DEVICE)  # Ground truth for density
 
             # Make predictions
             with torch.no_grad():
                 pred1, pred2 = model(images)
 
-            # Add first image of each batch to the visualization list (adjust logic as needed)
+            # Store the first image of each batch and its corresponding ground truths for later visualization
             if len(images_to_visualize) < max_images_to_show:
-                images_to_visualize.append(images[0].cpu())  # Storing for visualization later
+                images_to_visualize.append(images[0].cpu())
+                ground_truths_breast_area.append(gt_breast_area[0].cpu())  # Store ground truth for breast area
+                ground_truths_density.append(gt_density[0].cpu())  # Store ground truth for density
 
         except Exception as e:
             print(f"Error during evaluation: {e}")
@@ -301,10 +332,20 @@ with open(f"test_output/evaluation/{MODEL_NAME}.txt", 'a+') as logs_file:
 
             print(log_line, file=logs_file)
 
-# After evaluation and logging, visualize the stored images
+results_text = read_log_results(f"test_output/evaluation/{MODEL_NAME}.txt")
+# After evaluation and logging, visualize the stored images and their ground truths
 print("Visualizing results...")
-for img in images_to_visualize:
-    visualize_segmentation_results(img, model)  # Adjust this function as needed
+for img, gt_breast_area, gt_density in zip(images_to_visualize, ground_truths_breast_area, ground_truths_density):
+    # Assuming 'pred1' and 'pred2' are the predictions for the current 'img':
+    # This part needs to call the prediction again for each 'img', or you adjust the loop to store predictions
+    # The following is a placeholder for the actual prediction call
+    pred1, pred2 = model(img.unsqueeze(0).to(DEVICE))  # You need to ensure this matches how you handle your model predictions
+
+    # Convert predictions to binary masks based on a threshold, e.g., 0.5
+    pred1_binary = (pred1 > 0.5).float()
+    pred2_binary = (pred2 > 0.5).float()
+
+    visualize_evaluation_results(img, pred1_binary, pred2_binary, gt_breast_area, gt_density, results_text)
 print("Visualizations completed.")
 
 print("Evaluation complete.")
