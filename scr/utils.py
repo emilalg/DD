@@ -1,5 +1,5 @@
 import os
-
+import re
 """
 Function to fill in missing directories, given an input path.
 Currently not in use anywhere, potential for repurpose?
@@ -64,3 +64,18 @@ def load_env():
     current_directory = os.path.dirname(os.path.abspath(__file__))
     dotenv_path = os.path.join(current_directory, "..", ".env")
     load_dotenv(dotenv_path=dotenv_path, override=True)
+
+
+def camel_to_snake(name):
+    name = re.sub('(.)([A-Z][a-z]+)', r'\1_\2', name)
+    return re.sub('([a-z0-9])([A-Z])', r'\1_\2', name).lower()
+
+def get_loss_key(loss_name):
+    key_base = camel_to_snake(loss_name[:-4])
+    return key_base + "_loss_weighted"
+
+# Read the last line of the logs file
+def read_log_results(logs_file_path):
+    with open(logs_file_path, 'r') as logs_file:
+        lines = logs_file.readlines()  # Read all lines into a list
+        return lines[-1]  # Return the last line

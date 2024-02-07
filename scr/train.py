@@ -10,7 +10,6 @@ It saves the logs and model in the specified path.
 
 # importing libraries
 import argparse  # for command line arguments
-import re
 import torch  # for deep learning
 import torch.optim as optim  # for optimization
 import torch.nn as nn  # for neural network
@@ -20,7 +19,7 @@ import segmentation_models_multi_tasking as smp  # for segmentation model
 import matplotlib.pyplot as plt  # for plotting graphs
 import os
 import datetime
-from utils import load_env
+from utils import load_env, get_loss_key
 
 
 """These are the default parameters. Do not modify them here. instead create .env file in project root or use command line arguments!"""
@@ -298,7 +297,7 @@ def main():
     plt.legend()
     # Savefig needs to be called first before show since closing the plt.show() image causes it to be freed from memory
     plt.savefig(f"test_output/logs/accuracy/{MODEL_NAME}_accuracy_{timestamp}.jpg")
-    plt.show()
+    #plt.show()
     # Plot loss
     plt.plot(epochs, train_loss, label="Train Loss")
     plt.plot(epochs, valid_loss, label="Validation Loss")
@@ -308,15 +307,8 @@ def main():
     plt.title("Loss Curve")
     plt.legend()
     plt.savefig(f"test_output/logs/loss/{MODEL_NAME}_loss_{timestamp}.jpg")
-    plt.show()
+    #plt.show()
     
-def camel_to_snake(name):
-    name = re.sub('(.)([A-Z][a-z]+)', r'\1_\2', name)
-    return re.sub('([a-z0-9])([A-Z])', r'\1_\2', name).lower()
-
-def get_loss_key(loss_name):
-    key_base = camel_to_snake(loss_name[:-4])
-    return key_base + "_loss_weighted"
 
 if __name__ == "__main__":
     main()
