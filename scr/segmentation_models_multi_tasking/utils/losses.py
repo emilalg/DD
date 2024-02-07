@@ -46,7 +46,7 @@ class DiceLoss(base.Loss):
 
 
 class DSCPlusPlusLoss(base.Loss):
-    def __init__(self, eps=1e-5, beta=1.0, gamma=2.5, activation=None, ignore_channels=None):
+    def __init__(self, eps=1e-5, beta=0.9, gamma=2.5, activation=None, ignore_channels=None):
         super().__init__()
         self.eps = eps
         self.beta = beta
