@@ -10,7 +10,6 @@ It saves the logs and model in the specified path.
 
 # importing libraries
 import argparse  # for command line arguments
-import re
 import torch  # for deep learning
 import torch.optim as optim  # for optimization
 import torch.nn as nn  # for neural network
@@ -19,7 +18,8 @@ from dataset import MammoDataset, get_dataset_splits  # for loading dataset
 import segmentation_models_multi_tasking as smp  # for segmentation model
 import matplotlib.pyplot as plt  # for plotting graphs
 import os
-from utils import load_env
+import datetime
+from utils import load_env, get_loss_key
 
 
 """These are the default parameters. Do not modify them here. instead create .env file in project root or use command line arguments!"""
@@ -241,6 +241,7 @@ def main():
 
     # open the logs file
     with open(f"test_output/logs/{MODEL_NAME}.txt", "a+") as logs_file:
+        print('Epoch \t Loss Function \t Train Logs \t Valid Logs', file=logs_file)
         max_score = 0
         for i in range(0, config["num_epochs"]):
             print("\nEpoch: {}".format(i))
@@ -276,6 +277,15 @@ def main():
     # Plot accuracy and loss curves
     epochs = range(1, config["num_epochs"] + 1)
 
+    timestamp = datetime.datetime.now().strftime("%d-%m_%H-%M")
+
+    accuracyDir = "test_output/logs/accuracy/"
+    lossDir = "test_output/logs/loss"
+    if not os.path.exists(accuracyDir):
+        os.makedirs(accuracyDir)
+    if not os.path.exists(lossDir):
+        os.makedirs(lossDir)
+
     print(len(epochs), len(train_loss), len(valid_loss))
     # Plot accuracy
     plt.plot(epochs, train_accuracy, label="Train Accuracy")
@@ -285,9 +295,9 @@ def main():
     plt.ylabel("Accuracy")
     plt.title("Accuracy Curve")
     plt.legend()
-    #plt.show() # why are these blocking?
-    plt.savefig(f"test_output/logs/{MODEL_NAME}_accuracy.jpg")
-
+    # Savefig needs to be called first before show since closing the plt.show() image causes it to be freed from memory
+    plt.savefig(f"test_output/logs/accuracy/{MODEL_NAME}_accuracy_{timestamp}.jpg")
+    #plt.show()
     # Plot loss
     plt.plot(epochs, train_loss, label="Train Loss")
     plt.plot(epochs, valid_loss, label="Validation Loss")
@@ -296,16 +306,9 @@ def main():
     plt.ylabel("Loss")
     plt.title("Loss Curve")
     plt.legend()
+    plt.savefig(f"test_output/logs/loss/{MODEL_NAME}_loss_{timestamp}.jpg")
     #plt.show()
-    plt.savefig(f"test_output/logs/{MODEL_NAME}_loss.jpg")
     
-def camel_to_snake(name):
-    name = re.sub('(.)([A-Z][a-z]+)', r'\1_\2', name)
-    return re.sub('([a-z0-9])([A-Z])', r'\1_\2', name).lower()
-
-def get_loss_key(loss_name):
-    key_base = camel_to_snake(loss_name[:-4])
-    return key_base + "_loss_weighted"
 
 if __name__ == "__main__":
     main()
