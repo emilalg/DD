@@ -179,19 +179,27 @@ class hypertuner:
         }
 
 
-    def run(self, trial):
+    def run_trial(self, trial):
         config = copy.deepcopy(self.config)
-        DEVICE = self.DEVICE
-        dl_train = self.data["train"]["dataloader"]
-        dl_valid = self.data["valid"]["dataloader"]
-
+        
         # Now we modify the hyper params in the config with Optuna
         # These are passed through the trial parameter
         config["optimizer"] = trial.suggest_categorical("optimizer", ["Adam", "SGD"])
         config["loss_fucntion"] = trial.suggest_categorical("loss", ['DiceLoss', 'TverskyLoss', 'FocalTverskyLoss'])
         config["lr"] = trial.suggest_float('lr', 0.00001, 0.0001, log=True)
 
-        print(f'Executing with config {config}')
+        out = self.__run(config)
+
+        trial.set_user_attr("model", out["model"])
+        return out["valid_logs"].pop()["l1_loss"]
+
+
+    def __run(self, config):
+
+        DEVICE = self.DEVICE
+        dl_train = self.data["train"]["dataloader"]
+        dl_valid = self.data["valid"]["dataloader"]
+
         # create segmentation model with pretrained encoder
         model = getattr(smp, config["segmentation_model"])(
             encoder_name=config["encoder"],
@@ -257,45 +265,63 @@ class hypertuner:
             verbose=True,
         )
 
-        valid_accuracy = []
+        print(f'Executing with config {config}')
+
+        train_logs = []
+        valid_logs = []
+
         for i in range(0, config["num_epochs"]):
             print("\nEpoch: {}".format(i))
-            train_logs = train_epoch.run(dl_train)
-            valid_logs = valid_epoch.run(dl_valid)
-            valid_accuracy.append(valid_logs["accuracy"])
+            train_logs.append(train_epoch.run(dl_train))
+            valid_logs.append(valid_epoch.run(dl_valid))
 
-        final_valid_acc = valid_accuracy.pop()
-        print(f'Executed with final accuracy {final_valid_acc}')
-        return final_valid_acc
+        #final_valid_acc = valid_accuracy.pop()
+        #print(f'Executed with final accuracy {final_valid_acc}')
+
+        out = {
+            "train_logs": train_logs,
+            "valid_logs": valid_logs,
+            "model" : model
+        }
+        return out
+        
         
 
 def main():
+    # initalize hypertuner
     ht = hypertuner()
+
     # we can make a study deterministic by assigning a custom sampler with a set seed
     # does not feel necessary atm
-    study = optuna.create_study(direction='maximize')
+    study = optuna.create_study(direction='minimize')
+
     # some params to improve the search efficiency perhaps ? :)
     # defaults look ok
-    study.optimize(ht.run, n_trials=10)
+    study.optimize(ht.run_trial, n_trials=1)
     print(study.best_params)
     
     # output all trials
     trials = study.get_trials()
+
+    # write to log file
     outfile = open(f"test_output/logs/hypertuner.txt", "w+") 
+    outfile.write(f'Best parameters: {json.dumps(study.best_params, default=str, indent=4, sort_keys=True)} \n\n')
     for trial in trials:
         out = {
             "trial_nro": trial.number,
-            "accuracy": trial.value,
+            "L1Loss": trial.value,
             "start_date" : trial.datetime_start,
             "end_date" : trial.datetime_complete,
             "parameters" : trial.params
         }
-        outfile.write(json.dumps(out, default=str))
+        outfile.write(json.dumps(out, default=str, indent=4, sort_keys=True))
         outfile.write('\n')
-    outfile.write(f'\nBest parameters: {json.dumps(study.best_params, default=str)}')
     outfile.close()
 
-    
+    # write best model to file
+    best_model = study.best_trial.user_attrs["model"]
+    torch.save(best_model, f"test_output/models/{MODEL_NAME}.pth")
 
+    
 if __name__ == "__main__":
     main()
