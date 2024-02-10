@@ -190,7 +190,7 @@ class hypertuner:
 
         out = self.__run(config)
 
-        trial.set_user_attr("model", out["model"])
+        trial.set_user_attr("config", config)
         return out["valid_logs"].pop()["l1_loss"]
 
 
@@ -275,15 +275,18 @@ class hypertuner:
             train_logs.append(train_epoch.run(dl_train))
             valid_logs.append(valid_epoch.run(dl_valid))
 
-        #final_valid_acc = valid_accuracy.pop()
-        #print(f'Executed with final accuracy {final_valid_acc}')
-
         out = {
             "train_logs": train_logs,
             "valid_logs": valid_logs,
             "model" : model
         }
         return out
+    
+    def export_model(self, config):
+        # train and save model based on a config
+        print(f'Exporting model with config {config}')
+        temp = self.__run(config)
+        torch.save(temp["model"], f"test_output/models/{MODEL_NAME}.pth")
         
         
 
@@ -310,8 +313,6 @@ def main():
         out = {
             "trial_nro": trial.number,
             "L1Loss": trial.value,
-            "start_date" : trial.datetime_start,
-            "end_date" : trial.datetime_complete,
             "parameters" : trial.params
         }
         outfile.write(json.dumps(out, default=str, indent=4, sort_keys=True))
@@ -319,8 +320,9 @@ def main():
     outfile.close()
 
     # write best model to file
-    best_model = study.best_trial.user_attrs["model"]
-    torch.save(best_model, f"test_output/models/{MODEL_NAME}.pth")
+    ht.export_model(study.best_trial.user_attrs["config"])
+
+    
 
     
 if __name__ == "__main__":
