@@ -180,17 +180,42 @@ class hypertuner:
 
 
     def run_trial(self, trial):
+        # deepcopy so that we do not accidentally modify base config
         config = copy.deepcopy(self.config)
         
         # Now we modify the hyper params in the config with Optuna
         # These are passed through the trial parameter
         config["optimizer"] = trial.suggest_categorical("optimizer", ["Adam", "SGD"])
-        config["loss_fucntion"] = trial.suggest_categorical("loss", ['DiceLoss', 'TverskyLoss', 'FocalTverskyLoss'])
+        config["activation_function"] = trial.suggest_categorical("activation_function", ["sigmoid", "softmax"])
         config["lr"] = trial.suggest_float('lr', 0.00001, 0.0001, log=True)
 
+        # we set the loss function and parameters, and initialize the loss function in the config directly
+        # ugly code but w.e
+        # note the correct config name this time :)
+        lossfn = trial.suggest_categorical("loss", ['DiceLoss', 'TverskyLoss', 'FocalTverskyLoss'])
+        if lossfn == 'DiceLoss':
+            beta = trial.suggest_float('diceloss_beta', 0.1, 2, log=True)
+            eps = trial.suggest_float('diceloss_eps', 0.1, 2, log=True)
+            config["loss_function"] = smp.utils.losses.DiceLoss(beta=beta, eps=eps)
+        elif lossfn == 'TverskyLoss':
+            alpha = trial.suggest_float('tverskyloss_alpha', 0.1, 1, log=True)
+            beta = trial.suggest_float('tverskyloss_beta', 0.1, 1, log=True)
+            eps = trial.suggest_float('tverskyloss_eps', 0.1, 2, log=True)
+            config["loss_function"] = smp.utils.losses.TverskyLoss(alpha=alpha, beta=beta, eps=eps)
+        elif lossfn == 'FocalTverskyLoss':
+            alpha = trial.suggest_float('focaltverskyloss_alpha', 0.1, 1, log=True)
+            beta = trial.suggest_float('focaltverskyloss_beta', 0.1, 1, log=True)
+            eps = trial.suggest_float('focaltverskyloss_eps', 0.1, 2, log=True)
+            gamma = trial.suggest_float('focaltverskyloss_gamma', 0.1, 1, log=True)
+            config["loss_function"] = smp.utils.losses.FocalTverskyLoss(alpha=alpha, beta=beta, eps=eps, gamma=gamma)
+
+        # run trial
         out = self.__run(config)
 
-        trial.set_user_attr("config", config)
+        # save config, so we can convert it to a model later ( if its any good :) )
+        trial.set_user_attr("config", out)
+
+        # return float to optuna optimizer call
         return out["valid_logs"].pop()["l1_loss"]
 
 
@@ -211,8 +236,13 @@ class hypertuner:
         model = model.to(DEVICE)
         model = nn.DataParallel(model)
 
-        # define loss function
-        loss = getattr(smp.utils.losses, config["loss_fucntion"])()
+        # define loss function (if loss_function not properly initialized use old code)
+        # old: loss = getattr(smp.utils.losses, config["loss_fucntion"])()
+        loss = config["loss_function"]
+        if config["loss_function"] == None:
+            print('config["loss_function"] not set :(')
+            loss = getattr(smp.utils.losses, config["loss_fucntion"])()
+        
 
         # define metrics which will be monitored during training
         metrics = [
@@ -298,10 +328,23 @@ def main():
     # does not feel necessary atm
     study = optuna.create_study(direction='minimize')
 
+    # queue run wtih default parameters
+    study.enqueue_trial({
+        "optimizer": "Adam",
+        "loss": "FocalTverskyLoss",
+        "activation_function": "sigmoid",
+        "focaltverskyloss_alpha": 0.3,
+        "focaltverskyloss_beta": 0.7,
+        "focaltverskyloss_eps": 1.0,
+        "focaltverskyloss_gamma": 0.75,
+        "lr": 0.0001
+    })
+
     # some params to improve the search efficiency perhaps ? :)
     # defaults look ok
+    # because queued trial n_trials should be the number you want to run +1
     study.optimize(ht.run_trial, n_trials=1)
-    print(study.best_params)
+    print(f'Best parameters : {study.best_params}')
     
     # output all trials
     trials = study.get_trials()
@@ -320,6 +363,7 @@ def main():
     outfile.close()
 
     # write best model to file
+    print('Saving best model')
     ht.export_model(study.best_trial.user_attrs["config"])
 
     
