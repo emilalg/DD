@@ -10,6 +10,7 @@ data_original/*
 *.zip
 .ignore/**
 .env
+scr/autoalbument-config-search-cifar10/outputs/*
 # ------------------------------------------
 
 # Byte-compiled / optimized / DLL files
@@ -28,9 +29,5 @@ data_original/*
 /test_output/unet_aug_predictions/*
 
 # But re-include the mamogram file in each
-!/test_output/evaluation/mamogram
-!/test_output/logs/mamogram
-!/test_output/models/mamogram
-!/test_output/test/mamogram
-!/test_output/unet_aug_predictions/mamogram
+!**/*.gitkeep
 

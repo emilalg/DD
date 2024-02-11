@@ -23,7 +23,7 @@ def save_files_for_evaluation (model_name, whole_dataset, train_set, val_set, te
     train_set_files = [os.path.basename(whole_dataset[i]) for i in train_set.indices]
     val_set_files = [os.path.basename(whole_dataset[i]) for i in val_set.indices]
     test_set_files = [os.path.basename(whole_dataset[i]) for i in test_set.indices]
-    with open(f"test_output/logs/{model_name}_splits.txt", 'w') as f:
+    with open(os.path.join(os.path.dirname(__file__), f"../test_output/logs/{model_name}_splits.txt"), 'w') as f:
         f.write(f'Seed: {generator.seed()}\n')
         f.write('Train:\n')
         for filename in train_set_files: 
@@ -72,7 +72,7 @@ def get_dataset_splits(path, model_name, split_ratios=split_ratios, generator=to
     return (train_set, val_set, test_set)
 
 def construct_test_set(model_name):
-    with open(f"test_output/logs/{model_name}_splits.txt", 'r') as f:
+    with open(os.path.join(os.path.dirname(__file__), f"../test_output/logs/{model_name}_splits.txt"), 'r') as f:
         # read untl you get to Test: 
         # then read every line ending .jpg and append to test_set
         # return test_set
