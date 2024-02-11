@@ -26,7 +26,7 @@ from visual import visualize_evaluation_results
 from utils import get_loss_key, read_log_results
 to_pil_image = ToPILImage()
 
-LOSS = 'FocalTverskyLoss' # change the results log ['DiceLoss', 'TverskyLoss', 'FocalTverskyLoss', 'BCEWithLogitsLoss']
+LOSS = 'DSCPlusPlusLoss' # change the results log ['DiceLoss', 'TverskyLoss', 'FocalTverskyLoss', 'BCEWithLogitsLoss. DSCPlusPlusLoss']
 
 
 load_env()
@@ -172,7 +172,7 @@ def image_tensor(img):
         raise TypeError("Input must be np.ndarray or PIL.Image")
     
 # Define the maximum number of images to show
-max_images_to_show = 1  # You can adjust this number as needed
+max_images_to_show = 5  # You can adjust this number as needed
 
 # Initialize a list to store images for later visualization
 images_to_visualize = []
