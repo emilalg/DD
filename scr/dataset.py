@@ -14,6 +14,7 @@ from torch.utils.data import Dataset, random_split
 from torchvision import transforms
 import albumentations as A
 from collections import namedtuple
+import csv
 
 SplitRatios = namedtuple('SplitRatios', ['train', 'valid', 'test'])
 split_ratios = SplitRatios(train=0.8, valid=0.1, test=0.1)
@@ -172,22 +173,50 @@ class MammoDataset(Dataset):
             return self.to_tensor(self.image), self.to_tensor(self.mask), self.to_tensor(self.contour)
 
 class MammoEvaluation(Dataset):
-    def __init__(self, path, dataset, split):
+    def __init__(self, path, dataset, split, mode, ground_truths_path=None, mask_path=None):
         """ used to initialize class with required parameters
         :param path: Path to the dataset
         :param dataset: Name of the dataset folder
         :param split: Type of datasetsplit what is used such as 'train', 'valid' or 'test'
-
+        :param mode: Mode of operation ('submission', 'testsubmission').
+        :param mask_path: Path to the directory containing ground truth masks for the test set (optional)
         """
         self.path = path
         self.split = split
         self.dataset = dataset
+        self.mode = mode
+        self.ground_truths_path = ground_truths_path
+        self.mask_path = mask_path if mask_path else path  # Use separate mask path if provided, otherwise use the same path as the images
 
-        self.images = natsorted(glob.glob(os.path.join(self.path, self.dataset, self.split, 'input_image/*')))
-        self.b_mask = natsorted(glob.glob(os.path.join(self.path, self.dataset, self.split, 'breast_mask/*')))
-        self.d_mask = natsorted(glob.glob(os.path.join(self.path, self.dataset, self.split, 'dense_mask/*')))
-        #self.images = natsorted(glob.glob(os.path.join(self.path,  '*')))
+        # Initialize image lists
+        self.images = []
+        self.b_mask = []
+        self.d_mask = []
 
+        if mode == 'submission':
+            # In submission mode, load all test images
+            self.images = natsorted(glob.glob(os.path.join(self.path, 'test', 'test', 'images', '*')))
+        elif mode == 'testsubmission':
+            # In testsubmission mode, load images as per ground_truths (train.csv)
+            with open(self.ground_truths_path, 'r') as f:
+                reader = csv.DictReader(f)
+                ground_truth_filenames = [row['Filename'] for row in reader]
+
+            # Load images based on filenames in the ground truth list
+            for file_name in ground_truth_filenames:
+                img_path = os.path.join(self.path, 'train', 'train', 'images', file_name)
+                if os.path.exists(img_path):
+                    self.images.append(img_path)
+                    self.b_mask.append(os.path.join(self.path, 'train', 'train', 'breast_masks', file_name))
+                    self.d_mask.append(os.path.join(self.path, 'train', 'train', 'dense_masks', file_name))
+                else:
+                    print(f"Warning: Image file {file_name} not found.")
+
+
+        # Verify the number of images and masks loaded
+        print(f"Total images loaded: {len(self.images)}")
+        print(f"Total breast masks loaded: {len(self.b_mask)}")
+        print(f"Total dense masks loaded: {len(self.d_mask)}")
 
     def __len__(self):
         """
@@ -206,17 +235,18 @@ class MammoEvaluation(Dataset):
         self.image_org = cv2.imread(self.images[index], 1)
         self.image_org = cv2.cvtColor(self.image_org, cv2.COLOR_BGR2RGB)
 
-        self.b_mask_org = cv2.imread(self.b_mask[index], 0)
-        self.d_mask_org = cv2.imread(self.d_mask[index], 0)
-
-        
         self.image_org = self.to_tensor(self.image_org)
-        self.b_mask_org = self.to_tensor(self.b_mask_org)
-        self.d_mask_org = self.to_tensor(self.d_mask_org)
-        #print(self.image)
-        #print(self.image.shape)
         
-        return os.path.split(self.images[index])[-1], self.image_org, self.b_mask_org, self.d_mask_org
+        if self.mode == 'submission':
+            return os.path.split(self.images[index])[-1], self.image_org
+        else:
+            self.b_mask_org = cv2.imread(self.b_mask[index], 0)
+            self.d_mask_org = cv2.imread(self.d_mask[index], 0)
+
+            self.b_mask_org = self.to_tensor(self.b_mask_org)
+            self.d_mask_org = self.to_tensor(self.d_mask_org)
+             
+            return os.path.split(self.images[index])[-1], self.image_org, self.b_mask_org, self.d_mask_org
 
 ### 
 #data = KUHDataset(path='data', dataset='DDSM_Dataset', split='train')
