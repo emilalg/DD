@@ -240,7 +240,7 @@ def main():
 
 
     # open the logs file
-    with open(f"test_output/logs/{MODEL_NAME}.txt", "a+") as logs_file:
+    with open(os.path.join(os.path.dirname(__file__), f"../test_output/logs/{MODEL_NAME}.txt"), "a+") as logs_file:
         print('Epoch \t Loss Function \t Train Logs \t Valid Logs', file=logs_file)
         max_score = 0
         for i in range(0, config["num_epochs"]):
