@@ -190,7 +190,7 @@ class MammoEvaluation(Dataset):
                 reader = csv.DictReader(f)
                 ground_truth_filenames = [row['Filename'] for row in reader]
                 val_set_filenames = construct_val_set(model_name)
-                print(val_set_filenames)
+                # print(val_set_filenames)
                 filtered_filenames = [filename for filename in ground_truth_filenames if filename in val_set_filenames]
 
             # Load images based on filenames in the ground truth list
