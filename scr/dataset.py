@@ -188,13 +188,13 @@ class MammoEvaluation(Dataset):
             # In testsubmission mode, load images as per ground_truths (train.csv)
             with open(self.ground_truths_path, 'r') as f:
                 reader = csv.DictReader(f)
-                ground_truth_filenames = [row['Filename'] for row in reader]
-                val_set_filenames = construct_val_set(model_name)
+                gfilenames = [row['Filename'] for row in reader]
+                vfilenames = construct_val_set(model_name)
                 # print(val_set_filenames)
-                filtered_filenames = [filename for filename in ground_truth_filenames if filename in val_set_filenames]
+                filenames = [filename for filename in gfilenames if filename in vfilenames]
 
             # Load images based on filenames in the ground truth list
-            for file_name in filtered_filenames:
+            for file_name in filenames:
                 img_path = os.path.join(self.path, 'train', 'train', 'images', file_name)
                 if os.path.exists(img_path):
                     self.images.append(img_path)
