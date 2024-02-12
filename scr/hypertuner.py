@@ -43,6 +43,7 @@ DATA_PATH = os.getenv("DATA_PATH", "../breast-density-prediction/train/train")
 # LOGS_FILE_PATH = os.getenv("LOGS_FILE_PATH", "test_output/logs/unet.txt")
 # MODEL_SAVE_PATH = os.getenv("MODEL_SAVE_PATH", "test_output/models/unet.pth")
 MODEL_NAME = os.getenv("MODEL_NAME", "double_d")
+NUM_TRIALS = os.getenv("NUM_TRIALS", 10)
 
 """
 Comment out print stuff :D
@@ -114,6 +115,7 @@ def parse_args():
     parser.add_argument("--optimizer", default=OPTIMIZER, type=str, help="optimization")
     parser.add_argument("--lr", default=LR, type=float, help="initial learning rate")
     parser.add_argument("--num_epochs", default=NUM_EPOCHS, type=int, help="Number of epochs")
+    parser.add_argument("--num_trials", default=NUM_TRIALS, type=int, help="Number of trials to run trainer for")
 
     parser.add_argument(
         "--model_name", default=MODEL_NAME, type=str, help="name of the model (used for saving all related data)"
@@ -192,7 +194,7 @@ class hypertuner:
         # we set the loss function and parameters, and initialize the loss function in the config directly
         # ugly code but w.e
         # note the correct config name this time :)
-        lossfn = trial.suggest_categorical("loss", ['DiceLoss', 'TverskyLoss', 'FocalTverskyLoss'])
+        lossfn = trial.suggest_categorical("loss", ['DiceLoss', 'TverskyLoss', 'FocalTverskyLoss', 'FocalTverskyPlusPlusLoss', 'ComboLoss', 'FocalTverskyPlusPlusLoss'])
         if lossfn == 'DiceLoss':
             beta = trial.suggest_float('diceloss_beta', 0.1, 2, log=True)
             eps = trial.suggest_float('diceloss_eps', 0.1, 2, log=True)
@@ -208,12 +210,26 @@ class hypertuner:
             eps = trial.suggest_float('focaltverskyloss_eps', 0.1, 2, log=True)
             gamma = trial.suggest_float('focaltverskyloss_gamma', 0.1, 1, log=True)
             config["loss_function"] = smp.utils.losses.FocalTverskyLoss(alpha=alpha, beta=beta, eps=eps, gamma=gamma)
+        elif lossfn == 'FocalTverskyPlusPlusLoss':
+            alpha = trial.suggest_float('focaltverskyloss_alpha', 0.1, 1, log=True)
+            beta = trial.suggest_float('focaltverskyloss_beta', 0.1, 1, log=True)
+            eps = trial.suggest_float('focaltverskyloss_eps', 0.1, 2, log=True)
+            gamma = trial.suggest_float('focaltverskyloss_gamma', 0.1, 1, log=True)
+            config["loss_function"] = smp.utils.losses.FocalTverskyLoss(alpha=alpha, beta=beta, eps=eps, gamma=gamma)
+        elif lossfn == 'ComboLoss':
+            config["loss_function"] = smp.utils.losses.ComboLoss()
+        elif lossfn == 'FocalTverskyPlusPlusLoss':
+            # we leave eps as constant ?
+            alpha = trial.suggest_float('focaltverskyplusplusloss_alpha', 0.1, 1, log=True)
+            beta = trial.suggest_float('focaltverskyplusplusloss_beta', 0.1, 1, log=True)
+            gamma = trial.suggest_float('focaltverskyplusplusloss_gamma', 0.1, 5, log=True)
+            config["loss_function"] = smp.utils.losses.FocalTverskyPlusPlusLoss(alpha=alpha, beta=beta, gamma=gamma)
 
         # run trial
         out = self.__run(config)
 
-        # save config, so we can convert it to a model later ( if its any good :) )
-        trial.set_user_attr("config", out)
+        # save modified config, so we can convert it to a model later ( if its any good :) )
+        trial.set_user_attr("config", config)
 
         # return float to optuna optimizer call
         return out["valid_logs"].pop()["l1_loss"]
@@ -323,7 +339,7 @@ class hypertuner:
 def main():
     # initalize hypertuner
     ht = hypertuner()
-
+    num_trials = ht.config["num_trials"]
     # we can make a study deterministic by assigning a custom sampler with a set seed
     # does not feel necessary atm
     study = optuna.create_study(direction='minimize')
@@ -342,8 +358,8 @@ def main():
 
     # some params to improve the search efficiency perhaps ? :)
     # defaults look ok
-    # because queued trial n_trials should be the number you want to run +1
-    study.optimize(ht.run_trial, n_trials=1)
+    # because of the queued trial, n_trials should be the number you want to run +1
+    study.optimize(ht.run_trial, n_trials=num_trials+1)
     print(f'Best parameters : {study.best_params}')
     
     # output all trials
