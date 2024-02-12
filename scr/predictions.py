@@ -41,7 +41,7 @@
 import argparse  # Used for parsing command line arguments
 import torch  # PyTorch library for deep learning
 import torch.nn as nn  # Neural network module from PyTorch
-from dataset import MammoEvaluation  # Custom dataset class for mammogram evaluation
+from dataset import MammoDataset, MammoEvaluation, construct_val_set  # Custom dataset class for mammogram evaluation
 from torch.utils.data import DataLoader, Subset  # DataLoader class for batch processing
 import segmentation_models_multi_tasking as smp  # Library for segmentation models
 from tqdm import tqdm  # Library for progress bars
@@ -64,16 +64,21 @@ Function to parse command line arguments
 DATA_PATH = os.getenv("DATA_PATH_PREDICTIONS", "./breast-density-prediction/")
 MODEL_NAME = os.getenv("MODEL_NAME")
 PREDICTION_MODEL_PATH = os.path.join('test_output/models/', f"{MODEL_NAME}.pth")
+SUBMISSION_MODE = os.getenv('SUBMISSION_MODE', 'submission')
+MODEL_NAME = os.getenv("MODEL_NAME", "double_d")
 
 def parse_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--mode', default='submission', type=str, choices=['submission', 'testsubmission'], help='Mode of operation: submission or testsubmission')
+    parser.add_argument('--mode', default=SUBMISSION_MODE, type=str, choices=['submission', 'testsubmission'], help='Mode of operation: submission or testsubmission')
     parser.add_argument('--data_path', default=DATA_PATH, type=str, help='dataset root path')
     parser.add_argument('--dataset', default='test', type=str, help='dataset ')
     parser.add_argument('--num_workers', default=0, type=int, help='Number of workers')
     parser.add_argument('--model_save_path', default=PREDICTION_MODEL_PATH, type=str, help='path to save the model') # change her
     parser.add_argument('--results_path', default='test_output/test/report.txt', type=str, help='path to save the model')  # change here
     parser.add_argument('--masks_path', type=str, help='path to ground truth masks', required=False)
+    parser.add_argument(
+            "--model_name", default=MODEL_NAME, type=str, help="name of the model (used for saving all related data)"
+    ) 
     config = parser.parse_args()
     return config
 
@@ -264,9 +269,9 @@ def main():
     if config['mode'] == 'submission':
         test_dataset = MammoEvaluation(path=config['data_path'], dataset='test', split='test', mode=config['mode'])
     elif config['mode'] == 'testsubmission':
-        test_dataset = MammoEvaluation(path=config['data_path'], dataset='train', split='train', mode=config['mode'], ground_truths_path = ground_truths_path)
-        selected_indices = list(range(149))  # Select the first 149 indices for 'testsubmission' mode.
-        test_dataset = Subset(test_dataset, selected_indices)
+        test_dataset = MammoEvaluation(path=config['data_path'], dataset='train', split='train', mode=config['mode'], ground_truths_path = ground_truths_path, model_name=MODEL_NAME)
+        # selected_indices = list(range(149))  # Select the first 149 indices for 'testsubmission' mode.
+        # test_dataset = Subset(test_dataset, selected_indices)
 
     test_dataloader = DataLoader(test_dataset, shuffle=False, batch_size=1, num_workers=config['num_workers'])
 

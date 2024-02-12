@@ -135,7 +135,7 @@ def main():
     # set random seeds for reproducibility
     torch.manual_seed(1990)
 
-    train_set, val_set, test_set = get_dataset_splits(path=os.path.join(os.path.dirname(__file__), DATA_PATH), model_name=MODEL_NAME)
+    train_set, val_set = get_dataset_splits(path=os.path.join(os.path.dirname(__file__), DATA_PATH), model_name=MODEL_NAME)
 
     # create dataset and dataloader
     train_dataset = MammoDataset(
