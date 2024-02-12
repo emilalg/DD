@@ -59,7 +59,7 @@ def get_dataset_splits(path, model_name, split_ratios=split_ratios, generator=to
     save_files_for_evaluation(model_name, whole_dataset, train_set, val_set, generator)
     # convert train_set and val_set to list of filenames
     train_set = [os.path.basename(whole_dataset[i]) for i in train_set.indices]
-
+    val_set = [os.path.basename(whole_dataset[i]) for i in val_set.indices]
     
     return (train_set, val_set)
 
