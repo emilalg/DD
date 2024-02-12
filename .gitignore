@@ -31,3 +31,4 @@ scr/autoalbument-config-search-cifar10/outputs/*
 # But re-include the mamogram file in each
 !**/*.gitkeep
 
+test_output/**/*

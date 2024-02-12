@@ -16,13 +16,12 @@ import albumentations as A
 from collections import namedtuple
 import csv
 
-SplitRatios = namedtuple('SplitRatios', ['train', 'valid', 'test'])
-split_ratios = SplitRatios(train=0.8, valid=0.1, test=0.1)
+SplitRatios = namedtuple('SplitRatios', ['train', 'valid'])
+split_ratios = SplitRatios(train=0.75, valid=0.25)
 
 def save_files_for_evaluation (model_name, whole_dataset, train_set, val_set, test_set, generator=torch.Generator().manual_seed(42)):
     train_set_files = [os.path.basename(whole_dataset[i]) for i in train_set.indices]
     val_set_files = [os.path.basename(whole_dataset[i]) for i in val_set.indices]
-    test_set_files = [os.path.basename(whole_dataset[i]) for i in test_set.indices]
     with open(os.path.join(os.path.dirname(__file__), f"../test_output/logs/{model_name}_splits.txt"), 'w') as f:
         f.write(f'Seed: {generator.seed()}\n')
         f.write('Train:\n')
@@ -31,9 +30,6 @@ def save_files_for_evaluation (model_name, whole_dataset, train_set, val_set, te
         f.write('Valid:\n')
         for filename in val_set_files:
             f.write(filename + '\n') 
-        f.write('Test:\n')
-        for filename in test_set_files:
-            f.write(filename + '\n') 
 
 def split_orderly(whole_dataset, split_ratios):
     train_set = torch.utils.data.Subset(whole_dataset, 
@@ -41,10 +37,7 @@ def split_orderly(whole_dataset, split_ratios):
     val_set = torch.utils.data.Subset(whole_dataset, 
                                       range(int(len(whole_dataset) * split_ratios.train),
                                             int(len(whole_dataset) * (split_ratios.train + split_ratios.valid))))
-    test_set = torch.utils.data.Subset(whole_dataset, 
-                                       range(int(len(whole_dataset) * (split_ratios.train + split_ratios.valid)),
-                                             len(whole_dataset)))
-    return train_set, val_set, test_set
+    return train_set, val_set
 
 
 def get_dataset_splits(path, model_name, split_ratios=split_ratios, generator=torch.Generator().manual_seed(42)):
@@ -52,42 +45,37 @@ def get_dataset_splits(path, model_name, split_ratios=split_ratios, generator=to
     print(path)
     if not os.path.exists(path):
         raise FileNotFoundError(f'Path {path} does not exist! the directory should have breast_masks, dense_masks and images -folders' )
-    if (split_ratios.train + split_ratios.valid + split_ratios.test) > 1.0:
+    if (split_ratios.train + split_ratios.valid) > 1.0:
         raise ValueError(f'Split ratios should be less than or equal to 1. Current split ratios are {split_ratios}')
    
     whole_dataset = natsorted(glob.glob(os.path.join(path, 'images/*')))
     # split the file names into train, valid and test sets
-    train_set, val_set, test_set = random_split(whole_dataset, [split_ratios.train, split_ratios.valid, split_ratios.test], generator=generator)
+    train_set, val_set = random_split(whole_dataset, [split_ratios.train, split_ratios.valid], generator=generator)
     
     # alternatively just pick them orderly
     # train_set, val_set, test_set = split_orderly(whole_dataset, split_ratios)
     
     # save the split to a file. maybe it will be used for evaluation
-    save_files_for_evaluation(model_name, whole_dataset, train_set, val_set, test_set, generator)
+    save_files_for_evaluation(model_name, whole_dataset, train_set, val_set, generator)
     # convert train_set and val_set to list of filenames
     train_set = [os.path.basename(whole_dataset[i]) for i in train_set.indices]
     val_set = [os.path.basename(whole_dataset[i]) for i in val_set.indices]
-    test_set = [os.path.basename(whole_dataset[i]) for i in test_set.indices]
     
-    return (train_set, val_set, test_set)
+    return (train_set, val_set)
 
-def construct_test_set(model_name):
+def construct_val_set(model_name):
     with open(os.path.join(os.path.dirname(__file__), f"../test_output/logs/{model_name}_splits.txt"), 'r') as f:
-        # read untl you get to Test: 
-        # then read every line ending .jpg and append to test_set
-        # return test_set
-        test_set = []
+        val_set = []
         line = f.readline()
         while line:
-            if line == 'Test:\n':
-                line = f.readline()
+            if line == 'Valid:\n':
                 while line:
                     if line.endswith('.jpg\n'):
-                        test_set.append(line[:-1])
+                        val_set.append(line[:-1])
                     line = f.readline()
                 break
             line = f.readline()
-    return test_set
+    return val_set
 
 
 class MammoDataset(Dataset):
@@ -173,7 +161,7 @@ class MammoDataset(Dataset):
             return self.to_tensor(self.image), self.to_tensor(self.mask), self.to_tensor(self.contour)
 
 class MammoEvaluation(Dataset):
-    def __init__(self, path, dataset, split, mode, ground_truths_path=None, mask_path=None):
+    def __init__(self, path, dataset, split, mode, ground_truths_path=None, mask_path=None, model_name=None):
         """ used to initialize class with required parameters
         :param path: Path to the dataset
         :param dataset: Name of the dataset folder
@@ -200,10 +188,13 @@ class MammoEvaluation(Dataset):
             # In testsubmission mode, load images as per ground_truths (train.csv)
             with open(self.ground_truths_path, 'r') as f:
                 reader = csv.DictReader(f)
-                ground_truth_filenames = [row['Filename'] for row in reader]
+                gfilenames = [row['Filename'] for row in reader]
+                vfilenames = construct_val_set(model_name)
+                # print(val_set_filenames)
+                filenames = [filename for filename in gfilenames if filename in vfilenames]
 
             # Load images based on filenames in the ground truth list
-            for file_name in ground_truth_filenames:
+            for file_name in filenames:
                 img_path = os.path.join(self.path, 'train', 'train', 'images', file_name)
                 if os.path.exists(img_path):
                     self.images.append(img_path)

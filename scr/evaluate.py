@@ -17,7 +17,7 @@ import segmentation_models_multi_tasking as smp
 from sklearn.metrics import mean_absolute_error
 import os
 from utils import load_env
-from dataset import construct_test_set
+from dataset import construct_val_set
 from PIL import Image
 import torchvision.transforms as transforms
 import numpy as np
@@ -87,7 +87,7 @@ print(config)
 
 # 2. First get the path to the dataset, then load the dataset using Torch's DataLoader
 # get the test set
-test_set = construct_test_set(model_name=config['model_name'])
+test_set = construct_val_set(model_name=config['model_name'])
 
 test_dataset = MammoDataset(
         path=os.path.join(os.path.dirname(__file__), config['data_path']),
