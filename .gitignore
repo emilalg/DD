@@ -32,3 +32,5 @@ scr/autoalbument-config-search-cifar10/outputs/*
 !**/*.gitkeep
 
 test_output/**/*
+
+.vscode/*

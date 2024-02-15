@@ -16,13 +16,16 @@ import albumentations as A
 from collections import namedtuple
 import csv
 
+from utils import Config
+
 SplitRatios = namedtuple('SplitRatios', ['train', 'valid'])
 split_ratios = SplitRatios(train=0.75, valid=0.25)
 
-def save_files_for_evaluation (model_name, whole_dataset, train_set, val_set, test_set, generator=torch.Generator().manual_seed(42)):
+def save_files_for_evaluation(model_name, whole_dataset, train_set, val_set, generator=torch.Generator().manual_seed(42)):
+    config = Config()
     train_set_files = [os.path.basename(whole_dataset[i]) for i in train_set.indices]
     val_set_files = [os.path.basename(whole_dataset[i]) for i in val_set.indices]
-    with open(os.path.join(os.path.dirname(__file__), f"../test_output/logs/{model_name}_splits.txt"), 'w') as f:
+    with open(os.path.join(config.output_path, f"logs/{model_name}_splits.txt"), 'w') as f:
         f.write(f'Seed: {generator.seed()}\n')
         f.write('Train:\n')
         for filename in train_set_files: 
@@ -64,7 +67,8 @@ def get_dataset_splits(path, model_name, split_ratios=split_ratios, generator=to
     return (train_set, val_set)
 
 def construct_val_set(model_name):
-    with open(os.path.join(os.path.dirname(__file__), f"../test_output/logs/{model_name}_splits.txt"), 'r') as f:
+    config = Config()
+    with open(os.path.join(config.output_path, f"logs/{model_name}_splits.txt"), 'r') as f:
         val_set = []
         line = f.readline()
         while line:
@@ -161,7 +165,7 @@ class MammoDataset(Dataset):
             return self.to_tensor(self.image), self.to_tensor(self.mask), self.to_tensor(self.contour)
 
 class MammoEvaluation(Dataset):
-    def __init__(self, path, dataset, split, mode, ground_truths_path=None, mask_path=None, model_name=None):
+    def __init__(self, path, mode, ground_truths_path=None, mask_path=None, model_name=None):
         """ used to initialize class with required parameters
         :param path: Path to the dataset
         :param dataset: Name of the dataset folder
@@ -169,9 +173,8 @@ class MammoEvaluation(Dataset):
         :param mode: Mode of operation ('submission', 'testsubmission').
         :param mask_path: Path to the directory containing ground truth masks for the test set (optional)
         """
+        config = Config()
         self.path = path
-        self.split = split
-        self.dataset = dataset
         self.mode = mode
         self.ground_truths_path = ground_truths_path
         self.mask_path = mask_path if mask_path else path  # Use separate mask path if provided, otherwise use the same path as the images
@@ -183,7 +186,7 @@ class MammoEvaluation(Dataset):
 
         if mode == 'submission':
             # In submission mode, load all test images
-            self.images = natsorted(glob.glob(os.path.join(self.path, 'test', 'test', 'images', '*')))
+            self.images = natsorted(glob.glob(config.prediction_data_path, 'images', '*'))
         elif mode == 'testsubmission':
             # In testsubmission mode, load images as per ground_truths (train.csv)
             with open(self.ground_truths_path, 'r') as f:
@@ -195,11 +198,12 @@ class MammoEvaluation(Dataset):
 
             # Load images based on filenames in the ground truth list
             for file_name in filenames:
-                img_path = os.path.join(self.path, 'train', 'train', 'images', file_name)
+                img_path = os.path.join(self.path, 'images', file_name)
+                print(img_path)
                 if os.path.exists(img_path):
                     self.images.append(img_path)
-                    self.b_mask.append(os.path.join(self.path, 'train', 'train', 'breast_masks', file_name))
-                    self.d_mask.append(os.path.join(self.path, 'train', 'train', 'dense_masks', file_name))
+                    self.b_mask.append(os.path.join(self.path, 'breast_masks', file_name))
+                    self.d_mask.append(os.path.join(self.path, 'dense_masks', file_name))
                 else:
                     print(f"Warning: Image file {file_name} not found.")
 
