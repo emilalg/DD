@@ -27,8 +27,7 @@ import json
 class hypertuner:
 
     config = Config()
-    config = load_config_from_env(config)
-    config = load_config_from_args(config)
+
     
     data = None
     DEVICE = None
@@ -231,8 +230,6 @@ class hypertuner:
 
 def main():
     config = Config()
-    config = load_config_from_env(config)
-    config = load_config_from_args(config)
     
     # initalize hypertuner
     ht = hypertuner()

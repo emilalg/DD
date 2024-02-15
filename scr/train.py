@@ -33,8 +33,6 @@ Function to parse command line arguments
 
 def main():
     config = Config()
-    config = load_config_from_env(config)
-    config = load_config_from_args(config)
     print(f"train.py config:\n ", config)
 
     # set random seeds for reproducibility

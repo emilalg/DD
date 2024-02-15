@@ -105,6 +105,10 @@ class Config:
     valid_batch_size: int = 4
     new_arg: str = "🤪"
 
+    def __post_init__(self):
+        self = load_config_from_env(self)
+        self = load_config_from_args(self)
+        
     @property
     def PROJECT_ROOT(self) -> str:
         return self._PROJECT_ROOT
