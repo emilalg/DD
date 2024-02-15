@@ -223,8 +223,8 @@ class hypertuner:
     def export_model(self, config):
         # train and save model based on a config
         print(f'Exporting model with config {config}')
-        
-        torch.save(config.output_path, f"models/{config.model_name}.pth")
+        temp = self.__run(config) # ¯\_(ツ)_/¯
+        torch.save(temp["model"], os.path.join(config.output_path, f"models/{config.model_name}.pth"))
         
         
 
