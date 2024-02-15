@@ -161,7 +161,7 @@ class MammoDataset(Dataset):
             return self.to_tensor(self.image), self.to_tensor(self.mask), self.to_tensor(self.contour)
 
 class MammoEvaluation(Dataset):
-    def __init__(self, path, dataset, split, mode, ground_truths_path=None, mask_path=None, model_name=None):
+    def __init__(self, path, mode, ground_truths_path=None, mask_path=None, model_name=None):
         """ used to initialize class with required parameters
         :param path: Path to the dataset
         :param dataset: Name of the dataset folder
@@ -170,8 +170,6 @@ class MammoEvaluation(Dataset):
         :param mask_path: Path to the directory containing ground truth masks for the test set (optional)
         """
         self.path = path
-        self.split = split
-        self.dataset = dataset
         self.mode = mode
         self.ground_truths_path = ground_truths_path
         self.mask_path = mask_path if mask_path else path  # Use separate mask path if provided, otherwise use the same path as the images
@@ -195,11 +193,12 @@ class MammoEvaluation(Dataset):
 
             # Load images based on filenames in the ground truth list
             for file_name in filenames:
-                img_path = os.path.join(self.path, 'train', 'train', 'images', file_name)
+                img_path = os.path.join(self.path, 'images', file_name)
+                print(img_path)
                 if os.path.exists(img_path):
                     self.images.append(img_path)
-                    self.b_mask.append(os.path.join(self.path, 'train', 'train', 'breast_masks', file_name))
-                    self.d_mask.append(os.path.join(self.path, 'train', 'train', 'dense_masks', file_name))
+                    self.b_mask.append(os.path.join(self.path, 'breast_masks', file_name))
+                    self.d_mask.append(os.path.join(self.path, 'dense_masks', file_name))
                 else:
                     print(f"Warning: Image file {file_name} not found.")
 
