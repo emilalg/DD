@@ -96,6 +96,7 @@ class Config:
     num_trials: int = 10
     num_workers: int = 0
     optimizer: str = "Adam"
+    output_path: str = "test_output"
     prediction_data_path: str = "breast-density-prediction/test/test"
     prediction_mode: str = "testsubmission"
     pretrained_weights: str = None
@@ -103,11 +104,13 @@ class Config:
     train_data_path: str = "breast-density-prediction/train/train"
     train_batch_size: int = 4
     valid_batch_size: int = 4
-    new_arg: str = "🤪"
 
     def __post_init__(self):
         self = load_config_from_env(self)
         self = load_config_from_args(self)
+        self.prediction_data_path = os.path.join(self.PROJECT_ROOT, self.prediction_data_path)
+        self.train_data_path = os.path.join(self.PROJECT_ROOT, self.train_data_path)
+        self.output_path = os.path.join(self.PROJECT_ROOT, self.output_path)
         
     @property
     def PROJECT_ROOT(self) -> str:

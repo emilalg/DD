@@ -223,14 +223,14 @@ def process_testsubmission_mode(dataloader, model, ground_truths):
 
 def main():
     config = Config()
-    PREDICTION_MODEL_PATH = os.path.join(config.PROJECT_ROOT, "test_output/models/", f"{config.model_name}.pth")
+    PREDICTION_MODEL_PATH = os.path.join(config.output_path, f"models/{config.model_name}.pth")
 
-    ground_truths = load_ground_truths(os.path.join(config.PROJECT_ROOT, config.train_data_path, "../../train.csv"))
-    ground_truths_path = os.path.join(config.PROJECT_ROOT, config.train_data_path, "../../train.csv")
+    ground_truths = load_ground_truths(os.path.join(config.train_data_path, "../../train.csv"))
+    ground_truths_path = os.path.join(config.train_data_path, "../../train.csv")
 
     # Depending on the mode, the dataset directory paths will be set appropriately in the MammoEvaluation class.
     if config.prediction_mode == "submission":
-        test_dataset = MammoEvaluation(path=os.path.join(config.PROJECT_ROOT, config.train_data_path), mode=config.prediction_mode)
+        test_dataset = MammoEvaluation(path=config.train_data_path, mode=config.prediction_mode)
     elif config.prediction_mode == "testsubmission":
         test_dataset = MammoEvaluation(
             path=os.path.join(config.PROJECT_ROOT, config.train_data_path), mode=config.prediction_mode, ground_truths_path=ground_truths_path, model_name=config.model_name
@@ -251,7 +251,7 @@ def main():
     else:
         url = "https://www.dropbox.com/s/37rtedwwdslz9w6/all_datasets.pth?dl=1"
         response = requests.get(url)
-        open(os.path.join(config.PROJECT_ROOT, "test_output/models/weights.pth", "wb")).write(response.content)
+        open(os.path.join(config.output_path, "models/weights.pth", "wb")).write(response.content)
 
         # Decide which mode to process
     if config.prediction_mode == "submission":

@@ -38,11 +38,11 @@ def main():
     # set random seeds for reproducibility
     torch.manual_seed(1990)
 
-    train_set, val_set = get_dataset_splits(path=os.path.join(config.PROJECT_ROOT, config.train_data_path), model_name=config.model_name)
+    train_set, val_set = get_dataset_splits(path=config.train_data_path, model_name=config.model_name)
 
     # create dataset and dataloader
     train_dataset = MammoDataset(
-        path=os.path.join(config.PROJECT_ROOT, config.train_data_path),
+        path=config.train_data_path,
         filenames=train_set,
         augmentations=None,
     )
@@ -52,7 +52,7 @@ def main():
 
     # create validation dataset and dataloader
     valid_dataset = MammoDataset(
-        path=os.path.join(config.PROJECT_ROOT, config.train_data_path),
+        path=config.train_data_path,
         filenames=val_set,
         augmentations=None,
     )
@@ -143,7 +143,7 @@ def main():
 
 
     # open the logs file
-    with open(os.path.join(os.path.dirname(__file__), f"../test_output/logs/{config.model_name}.txt"), "a+") as logs_file:
+    with open(os.path.join(config.output_path, f"logs/{config.model_name}.txt"), "a+") as logs_file:
         print('Epoch \t Loss Function \t Train Logs \t Valid Logs', file=logs_file)
         max_score = 0
         print(config.num_epochs)

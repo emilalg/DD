@@ -41,11 +41,11 @@ class hypertuner:
 
         torch.manual_seed(1990)
 
-        train_set, val_set = get_dataset_splits(path=os.path.join(config.PROJECT_ROOT, config.train_data_path), model_name=config.model_name)
+        train_set, val_set = get_dataset_splits(path=config.train_data_path, model_name=config.model_name)
 
         # create dataset and dataloader
         train_dataset = MammoDataset(
-            path=os.path.join(config.PROJECT_ROOT, config.train_data_path),
+            path=config.train_data_path,
             filenames=train_set,
             augmentations=None,
         )
@@ -54,7 +54,7 @@ class hypertuner:
         )
         # create validation dataset and dataloader
         valid_dataset = MammoDataset(
-            path=os.path.join(config.PROJECT_ROOT, config.train_data_path),
+            path=config.train_data_path,
             filenames=val_set,
             augmentations=None,
         )
@@ -261,7 +261,7 @@ def main():
     trials = study.get_trials()
 
     # write to log file
-    outfile = open(os.path.join(config.PROJECT_ROOT, f"test_output/logs/hypertuner.txt"), "w+") 
+    outfile = open(os.path.join(config.output_path, f"logs/hypertuner.txt"), "w+") 
     outfile.write(f'Best parameters: {json.dumps(study.best_params, default=str, indent=4, sort_keys=True)} \n\n')
     for trial in trials:
         out = {
