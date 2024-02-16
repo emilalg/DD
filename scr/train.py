@@ -238,7 +238,6 @@ def main():
     train_loss = []
     valid_loss = []
 
-
     # open the logs file
     with open(os.path.join(os.path.dirname(__file__), f"../test_output/logs/{MODEL_NAME}.txt"), "a+") as logs_file:
         print('Epoch \t Loss Function \t Train Logs \t Valid Logs', file=logs_file)
@@ -268,11 +267,11 @@ def main():
             log_line += f"\t Epoch: {i}"
             print(log_line, file=logs_file)
 
-            # do something (save model, change lr, etc.)
-            if max_score < valid_logs["iou_score"]:
-                max_score = valid_logs["iou_score"]
-                torch.save(model, f"test_output/models/{MODEL_NAME}.pth")
-                print("Model saved!")
+            # Save best model
+            if max_score < valid_logs["fscore"]:
+                max_score = valid_logs["fscore"]
+                torch.save(model, f"test_output/models/{MODEL_NAME}.pth")  # Save model state dict for best performance
+                print(f"Best model saved at epoch {i}!")
 
     # Plot accuracy and loss curves
     epochs = range(1, config["num_epochs"] + 1)

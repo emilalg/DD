@@ -148,7 +148,7 @@ class hypertuner:
 
         torch.manual_seed(1990)
 
-        train_set, val_set, test_set = get_dataset_splits(path=os.path.join(os.path.dirname(__file__), DATA_PATH), model_name=MODEL_NAME)
+        train_set, val_set= get_dataset_splits(path=os.path.join(os.path.dirname(__file__), DATA_PATH), model_name=MODEL_NAME)
 
         # create dataset and dataloader
         train_dataset = MammoDataset(
@@ -189,7 +189,7 @@ class hypertuner:
         # These are passed through the trial parameter
         config["optimizer"] = trial.suggest_categorical("optimizer", ["Adam", "SGD"])
         config["activation_function"] = trial.suggest_categorical("activation_function", ["sigmoid", "softmax"])
-        config["lr"] = trial.suggest_float('lr', 0.00001, 0.0001, log=True)
+        config["lr"] = trial.suggest_float('lr', 0.00001, 0.0009, log=True)
 
         # we set the loss function and parameters, and initialize the loss function in the config directly
         # ugly code but w.e
@@ -224,6 +224,11 @@ class hypertuner:
             beta = trial.suggest_float('focaltverskyplusplusloss_beta', 0.1, 1, log=True)
             gamma = trial.suggest_float('focaltverskyplusplusloss_gamma', 0.1, 5, log=True)
             config["loss_function"] = smp.utils.losses.FocalTverskyPlusPlusLoss(alpha=alpha, beta=beta, gamma=gamma)
+        elif lossfn == 'DSCPlusPlusLoss':
+            beta = trial.suggest_float('dscplusplusloss_beta', 0.1, 3, log=True)
+            gamma = trial.suggest_float('dscplusplusloss_gamma', 0.1, 3, log=True)
+            config["loss_function"] = smp.utils.losses.DSCPlusPlusLoss(beta=beta, gamma=gamma)
+
 
         # run trial
         out = self.__run(config)
