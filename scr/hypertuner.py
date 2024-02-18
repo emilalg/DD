@@ -15,7 +15,8 @@ import torch  # for deep learning
 import torch.optim as optim  # for optimization
 import torch.nn as nn  # for neural network
 from torch.utils.data import DataLoader  # for loading data
-from dataset import MammoDataset, get_dataset_splits  # for loading dataset
+from dataset import MammoDataset, MammoEvaluation, construct_val_set, get_dataset_splits
+from predictions import load_ground_truths, process_testsubmission_mode  # for loading dataset
 import segmentation_models_multi_tasking as smp  # for segmentation model
 import matplotlib.pyplot as plt  # for plotting graphs
 import os
@@ -40,6 +41,7 @@ class hypertuner:
             self.DEVICE = torch.device("cuda")
         else:
             self.DEVICE = torch.device("cpu")
+        print(f"Device: {self.DEVICE}")
 
         torch.manual_seed(1990)
 
@@ -64,6 +66,14 @@ class hypertuner:
         valid_dataloader = DataLoader(
             valid_dataset, shuffle=True, batch_size=config.valid_batch_size, num_workers=config.num_workers
         )
+        
+        # predictions data initialization
+        self.ground_truths = load_ground_truths(os.path.join(config.train_data_path, "../../train.csv"))
+        ground_truths_path = os.path.join(config.train_data_path, "../../train.csv")
+        test_dataset = MammoEvaluation(
+            path=os.path.join(config.PROJECT_ROOT, config.train_data_path), mode=config.prediction_mode, ground_truths_path=ground_truths_path, model_name=config.model_name
+        )
+        self.predictions_dataloader = DataLoader(test_dataset, shuffle=False, batch_size=1, num_workers=config.num_workers)
 
         self.data = {
             "train": {
@@ -75,7 +85,7 @@ class hypertuner:
                 "dataloader": valid_dataloader
             }
         }
-
+        
 
     def run_trial(self, trial):
         # deepcopy so that we do not accidentally modify base config
@@ -146,9 +156,11 @@ class hypertuner:
 
         # save modified config, so we can convert it to a model later ( if its any good :) )
         trial.set_user_attr("config", config)
+        # print(f'\n\n out: {out} \n\n')
+        # print(f'\n\n MAE: {out["mae"]} \n\n')
 
         # return float to optuna optimizer call
-        return out["valid_logs"].pop()["l1_loss"]
+        return out["mae"]
 
 
     def __run(self, config: Config):
@@ -235,11 +247,16 @@ class hypertuner:
             print("\nEpoch: {}".format(i))
             train_logs.append(train_epoch.run(dl_train))
             valid_logs.append(valid_epoch.run(dl_valid))
+            
+        # run predictions
+        mae = process_testsubmission_mode(self.predictions_dataloader, model, self.ground_truths)
+        print(f'\n Mean Absolute Error: {mae} \n')
 
         out = {
             "train_logs": train_logs,
             "valid_logs": valid_logs,
-            "model" : model
+            "model" : model,
+            "mae": mae
         }
         return out
     
@@ -272,7 +289,7 @@ def main():
         "focaltverskyloss_eps": 1.0,
         "focaltverskyloss_gamma": 0.75,
         "lr": 0.0001
-    })
+    })    
 
     # some params to improve the search efficiency perhaps ? :)
     # defaults look ok
