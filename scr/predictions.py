@@ -106,6 +106,8 @@ def process_testsubmission_mode(dataloader, model, ground_truths):
     Fscore = smp.utils.metrics.Fscore()
 
     absolute_errors = []
+    predicted_densities = []
+    ground_truth_densities = []
 
     test_header_indexs = {"B_Prec": [], "B_Rec": [], "B_F-Sc": [], "B_Acc": [], "B_IoU": [], "D_Prec": [], "D_Rec": [], "D_F-Sc": [], "D_Acc": [], "D_IoU": []}
 
@@ -202,6 +204,9 @@ def process_testsubmission_mode(dataloader, model, ground_truths):
             absolute_errors.append(absolute_error)
             dense_row = f"{img_id[0]}\t{new_density}\t\t\t{ground_truth_density}\t\t\t{difference:.3f}"
             density_file.write(dense_row + "\n")
+            # After you calculate the new_density
+            predicted_densities.append(new_density)
+            ground_truth_densities.append(ground_truth_density)
 
         mean_absolute_error = np.mean(absolute_errors)
         density_file.write(f"Mean Absolute Error: {mean_absolute_error:.3f}\n")
@@ -219,6 +224,16 @@ def process_testsubmission_mode(dataloader, model, ground_truths):
         ci_density = average_count(new_dense_values)
         logs_file.write(f"\nAverage Density: {avg_density}\n")
         logs_file.write(f"Density Confidence Interval: {ci_density}\n")
+        # Calculate Pearson correlation coefficient
+        correlation_matrix = np.corrcoef(predicted_densities, ground_truth_densities)
+        pearson_correlation_coefficient = correlation_matrix[0, 1]  # This is the Pearson's r value
+
+        # Log the Pearson correlation coefficient
+        logs_file.write(f"Pearson Correlation Coefficient: {pearson_correlation_coefficient:.3f} Target: [0.89, 0.91] \n")
+
+        # If you want to also calculate a p-value for the correlation:
+        correlation, p_value = stats.pearsonr(predicted_densities, ground_truth_densities)
+        logs_file.write(f"Pearson Correlation Coefficient: {correlation:.3f} with a p-value of {p_value:.3f}\nif 0 then zero hypothesis is true\n")
 
 
 def main():
