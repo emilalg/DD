@@ -38,6 +38,8 @@ def main():
     # set random seeds for reproducibility
     torch.manual_seed(1990)
 
+    # to check which optimizer is available
+    print(dir(optim))
     train_set, val_set = get_dataset_splits(path=config.train_data_path, model_name=config.model_name)
 
     # create dataset and dataloader

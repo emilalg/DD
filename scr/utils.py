@@ -95,7 +95,7 @@ class Config:
     num_epochs: int = 5
     num_trials: int = 10
     num_workers: int = 0
-    optimizer: str = "Adam"
+    optimizer: str = "AdamW"
     output_path: str = "test_output"
     prediction_data_path: str = "breast-density-prediction/test/test"
     prediction_mode: str = "testsubmission"
