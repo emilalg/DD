@@ -124,16 +124,6 @@ class MammoDataset(Dataset):
                                              transforms.Resize((256, 256)),
                                              transforms.ToTensor(),])
 
-        # Uses Albumentations library that is a computer vision tool that can be used to create different variations of the same picture.
-        # Slightly modifes the images to increase the size of training data.
-        # Example: A.ShiftScaleRotate(p = 0.5) randomly apploes translate,scale and rotate to the input. 0.5 is the probability of applying the transform.
-        #https://albumentations.ai/
-        self.aug_pipeline = A.Compose([A.ShiftScaleRotate(),
-                                       A.HorizontalFlip(),
-                                       A.VerticalFlip(),
-                                       A.GaussNoise(),
-                                       A.GaussianBlur(),],p=0.5)
-
         # Read image
         self.image = cv2.imread(self.images[index], 1)
         self.image = cv2.cvtColor(self.image, cv2.COLOR_BGR2RGB)
@@ -141,23 +131,15 @@ class MammoDataset(Dataset):
         # Read breast mask and dense mask
         self.mask = cv2.imread(self.masks[index], 0)
         self.contour = cv2.imread(self.contours[index], 0)
-
+        
         # if augmentation is true (defaulted to false) applies the modification of images to increate the size of training data (self.aug_pipeline)
         if self.augmentations:
             # Seed for generating random numbers
             torch.manual_seed(1990)
             # List containing dense and breast masks
             masks = [self.mask, self.contour]
-            #if self.augmentation_type == 'pixel':
-            #    self.sample = self.pixel_augmentations(image = self.image, masks = masks)
-            #elif self.augmentation_type == 'spatial':
-            #    self.sample = self.spatial_augmentations(image=self.image, masks=masks)
-            #elif self.augmentation_type == 'pixel_spatial':
-            #    self.sample = self.pixel_spatial_augmentations(image=self.image, masks=masks)
-            #elif self.augmentation_type == 'aug_pipeline':
-
-            # Store augmented image
-            self.sample = self.aug_pipeline(image=self.image, masks=masks)
+            # Uses the augmentations defined in the config file
+            self.sample = self.augmentations(image=self.image, masks=masks)
             # Return augmented image if augmentation
             return self.to_tensor(self.sample['image']), self.to_tensor(self.sample['masks'][0]), self.to_tensor(self.sample['masks'][1])
         else:
@@ -199,7 +181,6 @@ class MammoEvaluation(Dataset):
             # Load images based on filenames in the ground truth list
             for file_name in filenames:
                 img_path = os.path.join(self.path, 'images', file_name)
-                print(img_path)
                 if os.path.exists(img_path):
                     self.images.append(img_path)
                     self.b_mask.append(os.path.join(self.path, 'breast_masks', file_name))

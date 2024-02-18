@@ -234,6 +234,8 @@ def process_testsubmission_mode(dataloader, model, ground_truths):
         # If you want to also calculate a p-value for the correlation:
         correlation, p_value = stats.pearsonr(predicted_densities, ground_truth_densities)
         logs_file.write(f"Pearson Correlation Coefficient: {correlation:.3f} with a p-value of {p_value:.3f}\nif 0 then zero hypothesis is true\n")
+        return mean_absolute_error
+        
 
 
 def main():

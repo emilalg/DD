@@ -15,11 +15,12 @@ import torch  # for deep learning
 import torch.optim as optim  # for optimization
 import torch.nn as nn  # for neural network
 from torch.utils.data import DataLoader  # for loading data
-from dataset import MammoDataset, get_dataset_splits  # for loading dataset
+from dataset import MammoDataset, MammoEvaluation, construct_val_set, get_dataset_splits
+from predictions import load_ground_truths, process_testsubmission_mode  # for loading dataset
 import segmentation_models_multi_tasking as smp  # for segmentation model
 import matplotlib.pyplot as plt  # for plotting graphs
 import os
-from utils import Config, load_config_from_args, load_config_from_env
+from utils import Config, load_config_from_args, load_config_from_env, get_augmentations
 import optuna
 import copy
 import json
@@ -34,10 +35,13 @@ class hypertuner:
 
     def __init__(self):   
         config = self.config
+        augmentations = get_augmentations(config)
+
         if torch.cuda.is_available():
             self.DEVICE = torch.device("cuda")
         else:
             self.DEVICE = torch.device("cpu")
+        print(f"Device: {self.DEVICE}")
 
         torch.manual_seed(1990)
 
@@ -47,8 +51,9 @@ class hypertuner:
         train_dataset = MammoDataset(
             path=config.train_data_path,
             filenames=train_set,
-            augmentations=None,
+            augmentations=augmentations,
         )
+
         train_dataloader = DataLoader(
             train_dataset, shuffle=True, batch_size=config.train_batch_size, num_workers=config.num_workers
         )
@@ -61,6 +66,14 @@ class hypertuner:
         valid_dataloader = DataLoader(
             valid_dataset, shuffle=True, batch_size=config.valid_batch_size, num_workers=config.num_workers
         )
+        
+        # predictions data initialization
+        self.ground_truths = load_ground_truths(os.path.join(config.train_data_path, "../../train.csv"))
+        ground_truths_path = os.path.join(config.train_data_path, "../../train.csv")
+        test_dataset = MammoEvaluation(
+            path=os.path.join(config.PROJECT_ROOT, config.train_data_path), mode=config.prediction_mode, ground_truths_path=ground_truths_path, model_name=config.model_name
+        )
+        self.predictions_dataloader = DataLoader(test_dataset, shuffle=False, batch_size=1, num_workers=config.num_workers)
 
         self.data = {
             "train": {
@@ -72,7 +85,7 @@ class hypertuner:
                 "dataloader": valid_dataloader
             }
         }
-
+        
 
     def run_trial(self, trial):
         # deepcopy so that we do not accidentally modify base config
@@ -84,6 +97,26 @@ class hypertuner:
         config.activation_function = trial.suggest_categorical("activation_function", ["sigmoid", "softmax"])
         config.learning_rate = trial.suggest_float('lr', 0.00001, 0.0001, log=True)
 
+        if config.use_augmentation:
+            # Only suggest these parameters if use_augmentation is True
+            config.affine_translate_percent_x_limit = [
+                trial.suggest_float('translate_percent_x_min', -0.20, 0.20),
+                trial.suggest_float('translate_percent_x_max', -0.20, 0.20)
+            ]
+            config.affine_translate_percent_y_limit = [
+                trial.suggest_float('translate_percent_y_min', -0.20, 0.20),
+                trial.suggest_float('translate_percent_y_max', -0.20, 0.20)
+            ]
+            config.affine_shear_limit = [
+                trial.suggest_float('shear_limit_min', -20, 20),
+                trial.suggest_float('shear_limit_max', -20, 20)
+            ]
+            config.affine_rotate_limit = [
+                trial.suggest_float('rotate_limit_min', -30, 30),
+                trial.suggest_float('rotate_limit_max', -30, 30)
+            ]
+            # ALways apply augmentation. Should you even change probability other than 1?
+            config.probability = 1
         # we set the loss function and parameters, and initialize the loss function in the config directly
         # ugly code but w.e
         # note the correct config name this time :)
@@ -123,9 +156,11 @@ class hypertuner:
 
         # save modified config, so we can convert it to a model later ( if its any good :) )
         trial.set_user_attr("config", config)
+        # print(f'\n\n out: {out} \n\n')
+        # print(f'\n\n MAE: {out["mae"]} \n\n')
 
         # return float to optuna optimizer call
-        return out["valid_logs"].pop()["l1_loss"]
+        return out["mae"]
 
 
     def __run(self, config: Config):
@@ -212,11 +247,16 @@ class hypertuner:
             print("\nEpoch: {}".format(i))
             train_logs.append(train_epoch.run(dl_train))
             valid_logs.append(valid_epoch.run(dl_valid))
+            
+        # run predictions
+        mae = process_testsubmission_mode(self.predictions_dataloader, model, self.ground_truths)
+        print(f'\n Mean Absolute Error: {mae} \n')
 
         out = {
             "train_logs": train_logs,
             "valid_logs": valid_logs,
-            "model" : model
+            "model" : model,
+            "mae": mae
         }
         return out
     
@@ -249,7 +289,7 @@ def main():
         "focaltverskyloss_eps": 1.0,
         "focaltverskyloss_gamma": 0.75,
         "lr": 0.0001
-    })
+    })    
 
     # some params to improve the search efficiency perhaps ? :)
     # defaults look ok
