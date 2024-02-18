@@ -181,7 +181,6 @@ class MammoEvaluation(Dataset):
             # Load images based on filenames in the ground truth list
             for file_name in filenames:
                 img_path = os.path.join(self.path, 'images', file_name)
-                print(img_path)
                 if os.path.exists(img_path):
                     self.images.append(img_path)
                     self.b_mask.append(os.path.join(self.path, 'breast_masks', file_name))

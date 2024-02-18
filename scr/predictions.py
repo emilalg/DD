@@ -219,6 +219,8 @@ def process_testsubmission_mode(dataloader, model, ground_truths):
         ci_density = average_count(new_dense_values)
         logs_file.write(f"\nAverage Density: {avg_density}\n")
         logs_file.write(f"Density Confidence Interval: {ci_density}\n")
+        return mean_absolute_error
+        
 
 
 def main():
