@@ -19,8 +19,7 @@ import segmentation_models_multi_tasking as smp  # for segmentation model
 import matplotlib.pyplot as plt  # for plotting graphs
 import os
 import datetime
-from utils import Config, get_loss_key, load_config_from_args, load_config_from_env
-
+from utils import Config, get_loss_key, load_config_from_args, load_config_from_env, get_augmentations
 
 
 
@@ -34,7 +33,7 @@ Function to parse command line arguments
 def main():
     config = Config()
     print(f"train.py config:\n ", config)
-
+    augmentations = get_augmentations(config)
     # set random seeds for reproducibility
     torch.manual_seed(1990)
 
@@ -44,7 +43,7 @@ def main():
     train_dataset = MammoDataset(
         path=config.train_data_path,
         filenames=train_set,
-        augmentations=None,
+        augmentations=augmentations,
     )
     train_dataloader = DataLoader(
         train_dataset, shuffle=True, batch_size=config.train_batch_size, num_workers=config.num_workers

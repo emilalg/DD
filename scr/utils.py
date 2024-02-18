@@ -3,6 +3,7 @@ import os
 import re
 from dataclasses import dataclass, fields
 from dotenv import load_dotenv
+import albumentations as A
 
 """
 Function to fill in missing directories, given an input path.
@@ -104,6 +105,14 @@ class Config:
     train_data_path: str = "breast-density-prediction/train/train"
     train_batch_size: int = 4
     valid_batch_size: int = 4
+    # Image augmnetation parameters, used in get_augmentations function. Starting point
+    use_augmentation: bool = True
+    affine_translate_percent_x_limit: tuple = (-0.15, 0.15)
+    affine_translate_percent_y_limit: tuple = (-0.15, 0.15)
+    affine_shear_limit: tuple = (-15, 15)
+    affine_rotate_limit: tuple = (-25, 25)
+    probability: int = 1
+    
 
     def __post_init__(self):
         self = load_config_from_env(self)
@@ -133,6 +142,10 @@ def add_arguments_for_config(parser, config):
             parser.add_argument(f"--{field_name}", default=field_default, type=int, help=f"{field_name} description")
         elif field_type == float:
             parser.add_argument(f"--{field_name}", default=field_default, type=float, help=f"{field_name} description")
+        elif field_type == bool:
+            parser.add_argument(f"--{field_name}", default=field_default, type=bool, help=f"{field_name} description")
+        elif field_type == tuple:
+            parser.add_argument(f"--{field_name}", default=field_default, type=tuple, help=f"{field_name} description")
         else:
             raise ValueError(f"Unsupported field type for {field_name}: {field_type}")
 
@@ -155,6 +168,10 @@ def load_config_from_env(config):
                 setattr(config, field_name, int(field_value))
             elif field_type == float:
                 setattr(config, field_name, float(field_value))
+            elif field_type == bool:
+                setattr(config, field_name, field_value.lower() == "true")
+            elif field_type == tuple:
+                setattr(config, field_name, tuple(map(field_type, field_value.split(","))))
             else:
                 raise ValueError(f"Unsupported field type for {field_name}: {field_type}")
 
@@ -174,6 +191,10 @@ def load_config_from_args(config):
             parser.add_argument(f"--{field_name}", default=field_default, type=int, help=f"{field_name} description")
         elif field_type == float:
             parser.add_argument(f"--{field_name}", default=field_default, type=float, help=f"{field_name} description")
+        elif field_type == bool:
+            parser.add_argument(f"--{field_name}", default=field_default, type=bool, help=f"{field_name} description")
+        elif field_type == tuple:
+            parser.add_argument(f"--{field_name}", default=field_default, type=tuple, help=f"{field_name} description")
         else:
             raise ValueError(f"Unsupported field type for {field_name}: {field_type}")
 
@@ -184,3 +205,22 @@ def load_config_from_args(config):
         setattr(config, field_name, getattr(args, field_name))
 
     return config
+
+# Function to get augmentations rules. Uses albumentations library. Used in hypertuner.py. Gets the augmentations from the config file.
+def get_augmentations(config):
+    if not config.use_augmentation:
+        return None
+    config = Config()
+    
+    return A.Compose([
+         A.Affine(
+                translate_percent={
+                    "x": (config.affine_translate_percent_x_limit[0], config.affine_translate_percent_x_limit[1]),
+                    "y": (config.affine_translate_percent_y_limit[0], config.affine_translate_percent_y_limit[1]),
+                },
+                shear=(config.affine_shear_limit[0], config.affine_shear_limit[1]),
+                rotate=(config.affine_rotate_limit[0], config.affine_rotate_limit[1]),
+                p=1,
+            ),
+
+    ])
