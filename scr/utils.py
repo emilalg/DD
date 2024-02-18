@@ -211,7 +211,7 @@ def get_augmentations(config):
     if not config.use_augmentation:
         return None
     config = Config()
-    print(config.affine_translate_percent_x_limit[0])
+    
     return A.Compose([
          A.Affine(
                 translate_percent={
