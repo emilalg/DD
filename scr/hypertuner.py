@@ -66,6 +66,14 @@ class hypertuner:
         valid_dataloader = DataLoader(
             valid_dataset, shuffle=True, batch_size=config.valid_batch_size, num_workers=config.num_workers
         )
+        
+        # predictions data initialization
+        self.ground_truths = load_ground_truths(os.path.join(config.train_data_path, "../../train.csv"))
+        ground_truths_path = os.path.join(config.train_data_path, "../../train.csv")
+        test_dataset = MammoEvaluation(
+            path=os.path.join(config.PROJECT_ROOT, config.train_data_path), mode=config.prediction_mode, ground_truths_path=ground_truths_path, model_name=config.model_name
+        )
+        self.predictions_dataloader = DataLoader(test_dataset, shuffle=False, batch_size=1, num_workers=config.num_workers)
 
         self.data = {
             "train": {
@@ -241,14 +249,7 @@ class hypertuner:
             valid_logs.append(valid_epoch.run(dl_valid))
             
         # run predictions
-        ground_truths = load_ground_truths(os.path.join(config.train_data_path, "../../train.csv"))
-        ground_truths_path = os.path.join(config.train_data_path, "../../train.csv")
-        test_dataset = MammoEvaluation(
-            path=os.path.join(config.PROJECT_ROOT, config.train_data_path), mode=config.prediction_mode, ground_truths_path=ground_truths_path, model_name=config.model_name
-        )
-        test_dataloader = DataLoader(test_dataset, shuffle=False, batch_size=1, num_workers=config.num_workers)
-
-        mae = process_testsubmission_mode(test_dataloader, model, ground_truths)
+        mae = process_testsubmission_mode(self.predictions_dataloader, model, self.ground_truths)
         print(f'\n Mean Absolute Error: {mae} \n')
 
         out = {
