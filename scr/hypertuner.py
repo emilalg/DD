@@ -19,7 +19,7 @@ from dataset import MammoDataset, get_dataset_splits  # for loading dataset
 import segmentation_models_multi_tasking as smp  # for segmentation model
 import matplotlib.pyplot as plt  # for plotting graphs
 import os
-from utils import Config, load_config_from_args, load_config_from_env
+from utils import Config, load_config_from_args, load_config_from_env, get_augmentations
 import optuna
 import copy
 import json
@@ -34,6 +34,8 @@ class hypertuner:
 
     def __init__(self):   
         config = self.config
+        augmentations = get_augmentations(config)
+
         if torch.cuda.is_available():
             self.DEVICE = torch.device("cuda")
         else:
@@ -47,8 +49,9 @@ class hypertuner:
         train_dataset = MammoDataset(
             path=config.train_data_path,
             filenames=train_set,
-            augmentations=None,
+            augmentations=augmentations,
         )
+
         train_dataloader = DataLoader(
             train_dataset, shuffle=True, batch_size=config.train_batch_size, num_workers=config.num_workers
         )
@@ -84,6 +87,26 @@ class hypertuner:
         config.activation_function = trial.suggest_categorical("activation_function", ["sigmoid", "softmax"])
         config.learning_rate = trial.suggest_float('lr', 0.00001, 0.0001, log=True)
 
+        if config.use_augmentation:
+            # Only suggest these parameters if use_augmentation is True
+            config.affine_translate_percent_x_limit = [
+                trial.suggest_float('translate_percent_x_min', -0.20, 0.20),
+                trial.suggest_float('translate_percent_x_max', -0.20, 0.20)
+            ]
+            config.affine_translate_percent_y_limit = [
+                trial.suggest_float('translate_percent_y_min', -0.20, 0.20),
+                trial.suggest_float('translate_percent_y_max', -0.20, 0.20)
+            ]
+            config.affine_shear_limit = [
+                trial.suggest_float('shear_limit_min', -20, 20),
+                trial.suggest_float('shear_limit_max', -20, 20)
+            ]
+            config.affine_rotate_limit = [
+                trial.suggest_float('rotate_limit_min', -30, 30),
+                trial.suggest_float('rotate_limit_max', -30, 30)
+            ]
+            # ALways apply augmentation. Should you even change probability other than 1?
+            config.probability = 1
         # we set the loss function and parameters, and initialize the loss function in the config directly
         # ugly code but w.e
         # note the correct config name this time :)
