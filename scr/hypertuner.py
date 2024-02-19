@@ -137,7 +137,7 @@ class hypertuner:
             alpha = trial.suggest_float('focaltverskyloss_alpha', 0.1, 1, log=True)
             beta = trial.suggest_float('focaltverskyloss_beta', 0.1, 1, log=True)
             gamma = trial.suggest_float('focaltverskyloss_gamma', 0.1, 1, log=True)
-            config.loss_function = smp.utils.losses.FocalTverskyLoss(alpha=alpha, beta=beta, gamma=gamma)
+            config.loss_function = smp.utils.losses.FocalTverskyPlusPlusLoss(alpha=alpha, beta=beta, gamma=gamma)
         elif lossfn == 'ComboLoss':
             config.loss_function = smp.utils.losses.ComboLoss()
         elif lossfn == 'DSCPlusPlusLoss':
