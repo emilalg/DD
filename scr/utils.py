@@ -106,7 +106,7 @@ class Config:
     train_batch_size: int = 4
     valid_batch_size: int = 4
     # Image augmnetation parameters, used in get_augmentations function. Starting point
-    use_augmentation: bool = True
+    use_augmentation: bool = False
     affine_translate_percent_x_limit: tuple = (-0.15, 0.15)
     affine_translate_percent_y_limit: tuple = (-0.15, 0.15)
     affine_shear_limit: tuple = (-15, 15)

@@ -24,11 +24,12 @@ from utils import Config, load_config_from_args, load_config_from_env, get_augme
 import optuna
 import copy
 import json
+from trial_parameters import TrialParameters
 
 class hypertuner:
 
     config = Config()
-
+    trial_params = None 
     
     data = None
     DEVICE = None
@@ -36,6 +37,7 @@ class hypertuner:
     def __init__(self):   
         config = self.config
         augmentations = get_augmentations(config)
+        self.trial_params = TrialParameters(loss=self.config.loss_function)
 
         if torch.cuda.is_available():
             self.DEVICE = torch.device("cuda")
@@ -86,6 +88,46 @@ class hypertuner:
             }
         }
         
+    def suggest_loss_params(self, trial, lossfn):
+
+        loss_name = lossfn
+
+        alpha_param_name = f'{loss_name.lower()}_alpha'
+        beta_param_name = f'{loss_name.lower()}_beta'
+
+        alpha_value = trial.suggest_float(alpha_param_name, 0.1, 1, log=True)
+       
+        beta_min = 1 - alpha_value  
+        beta_max = 1 - alpha_value  
+
+        beta_value = trial.suggest_float(beta_param_name, beta_min, beta_max, log=True)
+        
+        loss_functions = {
+            'Diceloss' : (smp.utils.losses.DiceLoss, lambda trial: {'beta': trial.suggest_float('diceloss_beta', 0.1, 1, log=True)}),
+            'TverskyLoss' : (smp.utils.losses.TverskyLoss, lambda trial:
+                            {'alpha': alpha_value, 
+                            'beta': beta_value}),
+            'FocalTverskyLoss': (smp.utils.losses.FocalTverskyLoss, lambda trial: 
+                            {'alpha': alpha_value, 
+                            'beta': beta_value, 
+                            'gamma': trial.suggest_float('focaltverskyloss_gamma', 0.1, 3, log=True)}),
+            'FocalTverskyPlusPlusLoss' : (smp.utils.losses.FocalTverskyPlusPlusLoss, lambda trial: 
+                            {'alpha': alpha_value,
+                            'beta':  beta_value,
+                            'gamma': trial.suggest_float('focaltverskyloss_gamma', 0.1, 1, log=True)}),
+            'ComboLoss' : (smp.utils.losses.ComboLoss, lambda trial: {}),
+            'DSCPlusPlusLoss' : (smp.utils.losses.DSCPlusPlusLoss, lambda trial: 
+                            {'beta': trial.suggest_float('dscplusplusloss_beta', 0.3, 1, log=True), 
+                             'gamma': trial.suggest_float('dscplusplusloss_gamma', 2, 3, log=True)})
+        }
+
+        # Suggest parameters and instantiate the loss function
+        if lossfn in loss_functions:
+            loss_class, params_func = loss_functions[lossfn]
+            params = params_func(trial)
+            return loss_class(**params)
+
+        raise ValueError(f"Unknown loss function: {lossfn}")
 
     def run_trial(self, trial):
         # deepcopy so that we do not accidentally modify base config
@@ -93,9 +135,11 @@ class hypertuner:
         
         # Now we modify the hyper params in the config with Optuna
         # These are passed through the trial parameter
-        config.optimizer = trial.suggest_categorical("optimizer", ["Adam", "SGD"])
-        config.activation_function = trial.suggest_categorical("activation_function", ["sigmoid", "softmax"])
-        config.learning_rate = trial.suggest_float('lr', 0.00001, 0.0001, log=True)
+        config.optimizer = trial.suggest_categorical("optimizer", ["Adam"])
+        config.activation_function = trial.suggest_categorical("activation_function", ["sigmoid"])
+
+        lr_min, lr_max = self.trial_params.lr_min_max
+        config.learning_rate = trial.suggest_float('lr', lr_min, lr_max, log=True)
 
         if config.use_augmentation:
             # Only suggest these parameters if use_augmentation is True
@@ -120,35 +164,12 @@ class hypertuner:
         # we set the loss function and parameters, and initialize the loss function in the config directly
         # ugly code but w.e
         # note the correct config name this time :)
-        lossfn = trial.suggest_categorical("loss", ['DSCPlusPlusLoss','DiceLoss', 'TverskyLoss', 'FocalTverskyLoss', 'FocalTverskyPlusPlusLoss', 'ComboLoss'])
-        if lossfn == 'DiceLoss':
-            beta = trial.suggest_float('diceloss_beta', 0.1, 1, log=True)
-            config.loss_function = smp.utils.losses.DiceLoss(beta=beta)
-        elif lossfn == 'TverskyLoss':
-            alpha = trial.suggest_float('tverskyloss_alpha', 0.1, 1, log=True)
-            beta = trial.suggest_float('tverskyloss_beta', 0.1, 1, log=True)
-            config.loss_function = smp.utils.losses.TverskyLoss(alpha=alpha, beta=beta)
-        elif lossfn == 'FocalTverskyLoss':
-            alpha = trial.suggest_float('focaltverskyloss_alpha', 0.1, 1, log=True)
-            beta = trial.suggest_float('focaltverskyloss_beta', 0.1, 1, log=True)
-            gamma = trial.suggest_float('focaltverskyloss_gamma', 0.1, 1, log=True)
-            config.loss_function = smp.utils.losses.FocalTverskyLoss(alpha=alpha, beta=beta, gamma=gamma)
-        elif lossfn == 'FocalTverskyPlusPlusLoss':
-            alpha = trial.suggest_float('focaltverskyloss_alpha', 0.1, 1, log=True)
-            beta = trial.suggest_float('focaltverskyloss_beta', 0.1, 1, log=True)
-            gamma = trial.suggest_float('focaltverskyloss_gamma', 0.1, 1, log=True)
-            config.loss_function = smp.utils.losses.FocalTverskyPlusPlusLoss(alpha=alpha, beta=beta, gamma=gamma)
-        elif lossfn == 'ComboLoss':
-            config.loss_function = smp.utils.losses.ComboLoss()
-        elif lossfn == 'DSCPlusPlusLoss':
-            beta = trial.suggest_float('dscplusplusloss_beta', 0.1, 1, log=True)
-            gamma = trial.suggest_float('dscplusplusloss_gamma', 0.1, 5, log=True)
-            config.loss_function = smp.utils.losses.DSCPlusPlusLoss(beta=beta, gamma=gamma)
+        lossfn = config.loss_function
         
-
+        config.loss_function = self.suggest_loss_params(trial, lossfn)
+        
         # run trial
         out = self.__run(config)
-
         # save modified config, so we can convert it to a model later ( if its any good :) )
         trial.set_user_attr("config", config)
         # print(f'\n\n out: {out} \n\n')
@@ -181,7 +202,6 @@ class hypertuner:
         if config.loss_function == None:
             Exception("Loss function not initialized")
         
-
         # define metrics which will be monitored during training
         metrics = [
             smp.utils.metrics.L1Loss(),
@@ -274,23 +294,22 @@ def main():
     # does not feel necessary atm
     study = optuna.create_study(direction='minimize')
 
-    # queue run wtih default parameters
-    study.enqueue_trial({
-        "optimizer": "Adam",
-        "loss": "FocalTverskyLoss",
-        "activation_function": "sigmoid",
-        "focaltverskyloss_alpha": 0.3,
-        "focaltverskyloss_beta": 0.7,
-        "focaltverskyloss_gamma": 0.75,
-        "lr": 0.0001
-    })    
+    trial_params = ht.trial_params.get_trial_parameters()
+ 
+    print(f'Adding enqueue trial with parameters: {trial_params}')
+    study.enqueue_trial(trial_params)
 
     # some params to improve the search efficiency perhaps ? :)
     # defaults look ok
     # because of the queued trial, n_trials should be the number you want to run +1
-    study.optimize(ht.run_trial, n_trials=num_trials+1)
-    print(f'Best parameters : {study.best_params}')
-    
+    study.optimize(ht.run_trial, n_trials=num_trials)
+    print('Optimization Complete. Saving and Exporting Best Model...')
+
+    best_params = study.best_params
+    best_trial_config = study.best_trial.user_attrs["config"]
+    ht.export_model(best_trial_config)
+    print(f'Best parameters : {best_params}')
+    print('Best model saved successfully.')
     # output all trials
     trials = study.get_trials()
 
@@ -306,10 +325,6 @@ def main():
         outfile.write(json.dumps(out, default=str, indent=4, sort_keys=True))
         outfile.write('\n')
     outfile.close()
-
-    # write best model to file
-    print('Saving best model')
-    ht.export_model(study.best_trial.user_attrs["config"])
 
     
 
