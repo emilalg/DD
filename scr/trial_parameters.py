@@ -20,7 +20,7 @@ class TrialParameters:
 
     def initialize_loss_weights(self):
         """
-        Initializes the loss weights based on the configured loss function.
+        Initializes the loss weights for study_queue and also learning-rate range for optuna to use based on the configured loss function.
         """
         loss_configurations = {
             "DSCPlusPlusLoss": ({'beta': 0.8, 'gamma': 2.6}, (0.001, 0.009)),
