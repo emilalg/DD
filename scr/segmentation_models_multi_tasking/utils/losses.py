@@ -255,7 +255,7 @@ class ComboLoss(base.Loss):
         # weight parameter for weighted cross-entropy loss
         # size_average to average the loss over the batch
 
-    def forward(self, inputs, targets, smooth=1, alpha=ALPHA, beta=BETA):
+    def forward(self, inputs, targets, smooth=1, alpha=0.5, beta=BETA, CE_RATIO=0.5):
         # Calculate the Combo loss given the inputs and targets,
         # where 'inputs' are the predicted probabilities from the model
         # and 'targets' are the true labels.
