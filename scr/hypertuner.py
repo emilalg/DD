@@ -143,7 +143,7 @@ class hypertuner:
         elif lossfn == 'DSCPlusPlusLoss':
             beta = trial.suggest_float('dscplusplusloss_beta', 0.1, 1, log=True)
             gamma = trial.suggest_float('dscplusplusloss_gamma', 0.1, 5, log=True)
-            config.loss_function = smp.utils.losses.DSCPlussPlusLoss()
+            config.loss_function = smp.utils.losses.DSCPlussPlusLoss(beta=beta, gamma=gamma)
         
 
         # run trial
