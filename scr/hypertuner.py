@@ -120,36 +120,31 @@ class hypertuner:
         # we set the loss function and parameters, and initialize the loss function in the config directly
         # ugly code but w.e
         # note the correct config name this time :)
-        lossfn = trial.suggest_categorical("loss", ['DiceLoss', 'TverskyLoss', 'FocalTverskyLoss', 'FocalTverskyPlusPlusLoss', 'ComboLoss', 'FocalTverskyPlusPlusLoss'])
+        lossfn = trial.suggest_categorical("loss", ['DSCPlusPlusLoss','DiceLoss', 'TverskyLoss', 'FocalTverskyLoss', 'FocalTverskyPlusPlusLoss', 'ComboLoss'])
         if lossfn == 'DiceLoss':
-            beta = trial.suggest_float('diceloss_beta', 0.1, 2, log=True)
-            eps = trial.suggest_float('diceloss_eps', 0.1, 2, log=True)
-            config.loss_function = smp.utils.losses.DiceLoss(beta=beta, eps=eps)
+            beta = trial.suggest_float('diceloss_beta', 0.1, 1, log=True)
+            config.loss_function = smp.utils.losses.DiceLoss(beta=beta)
         elif lossfn == 'TverskyLoss':
             alpha = trial.suggest_float('tverskyloss_alpha', 0.1, 1, log=True)
             beta = trial.suggest_float('tverskyloss_beta', 0.1, 1, log=True)
-            eps = trial.suggest_float('tverskyloss_eps', 0.1, 2, log=True)
-            config.loss_function = smp.utils.losses.TverskyLoss(alpha=alpha, beta=beta, eps=eps)
+            config.loss_function = smp.utils.losses.TverskyLoss(alpha=alpha, beta=beta)
         elif lossfn == 'FocalTverskyLoss':
             alpha = trial.suggest_float('focaltverskyloss_alpha', 0.1, 1, log=True)
             beta = trial.suggest_float('focaltverskyloss_beta', 0.1, 1, log=True)
-            eps = trial.suggest_float('focaltverskyloss_eps', 0.1, 2, log=True)
             gamma = trial.suggest_float('focaltverskyloss_gamma', 0.1, 1, log=True)
-            config.loss_function = smp.utils.losses.FocalTverskyLoss(alpha=alpha, beta=beta, eps=eps, gamma=gamma)
+            config.loss_function = smp.utils.losses.FocalTverskyLoss(alpha=alpha, beta=beta, gamma=gamma)
         elif lossfn == 'FocalTverskyPlusPlusLoss':
             alpha = trial.suggest_float('focaltverskyloss_alpha', 0.1, 1, log=True)
             beta = trial.suggest_float('focaltverskyloss_beta', 0.1, 1, log=True)
-            eps = trial.suggest_float('focaltverskyloss_eps', 0.1, 2, log=True)
             gamma = trial.suggest_float('focaltverskyloss_gamma', 0.1, 1, log=True)
-            config.loss_function = smp.utils.losses.FocalTverskyLoss(alpha=alpha, beta=beta, eps=eps, gamma=gamma)
+            config.loss_function = smp.utils.losses.FocalTverskyPlusPlusLoss(alpha=alpha, beta=beta, gamma=gamma)
         elif lossfn == 'ComboLoss':
             config.loss_function = smp.utils.losses.ComboLoss()
-        elif lossfn == 'FocalTverskyPlusPlusLoss':
-            # we leave eps as constant ?
-            alpha = trial.suggest_float('focaltverskyplusplusloss_alpha', 0.1, 1, log=True)
-            beta = trial.suggest_float('focaltverskyplusplusloss_beta', 0.1, 1, log=True)
-            gamma = trial.suggest_float('focaltverskyplusplusloss_gamma', 0.1, 5, log=True)
-            config.loss_function = smp.utils.losses.FocalTverskyPlusPlusLoss(alpha=alpha, beta=beta, gamma=gamma)
+        elif lossfn == 'DSCPlusPlusLoss':
+            beta = trial.suggest_float('dscplusplusloss_beta', 0.1, 1, log=True)
+            gamma = trial.suggest_float('dscplusplusloss_gamma', 0.1, 5, log=True)
+            config.loss_function = smp.utils.losses.DSCPlusPlusLoss(beta=beta, gamma=gamma)
+        
 
         # run trial
         out = self.__run(config)
@@ -286,7 +281,6 @@ def main():
         "activation_function": "sigmoid",
         "focaltverskyloss_alpha": 0.3,
         "focaltverskyloss_beta": 0.7,
-        "focaltverskyloss_eps": 1.0,
         "focaltverskyloss_gamma": 0.75,
         "lr": 0.0001
     })    
