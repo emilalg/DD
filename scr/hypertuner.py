@@ -91,8 +91,7 @@ class hypertuner:
     def suggest_loss_params(self, trial, lossfn):
 
         loss_name = lossfn
-        print(f'Loss function: {loss_name}')
-       
+
         alpha_param_name = f'{loss_name.lower()}_alpha'
         beta_param_name = f'{loss_name.lower()}_beta'
 
@@ -100,19 +99,21 @@ class hypertuner:
        
         beta_min = 1 - alpha_value  
         beta_max = 1 - alpha_value  
+
+        beta_value = trial.suggest_float(beta_param_name, beta_min, beta_max, log=True)
         
         loss_functions = {
-            'Diceloss' : (smp.utils.losses.DiceLoss, lambda trial: {'beta': trial.suggest_float('beta_param_name', 0.1, 1, log=True)}),
-            'TverskyLoss' : (smp.utils.losses.TverskyLoss, lambda trial: 
-                            {'alpha': trial.suggest_float('alpha_param_name', 0.1, 1, log=True), 
-                            'beta': trial.suggest_float(beta_param_name, beta_min, beta_max, log=True)}),
+            'Diceloss' : (smp.utils.losses.DiceLoss, lambda trial: {'beta': trial.suggest_float('diceloss_beta', 0.1, 1, log=True)}),
+            'TverskyLoss' : (smp.utils.losses.TverskyLoss, lambda trial:
+                            {'alpha': alpha_value, 
+                            'beta': beta_value}),
             'FocalTverskyLoss': (smp.utils.losses.FocalTverskyLoss, lambda trial: 
                             {'alpha': alpha_value, 
-                            'beta': trial.suggest_float(beta_param_name, beta_min, beta_max, log=True), 
+                            'beta': beta_value, 
                             'gamma': trial.suggest_float('focaltverskyloss_gamma', 0.1, 3, log=True)}),
             'FocalTverskyPlusPlusLoss' : (smp.utils.losses.FocalTverskyPlusPlusLoss, lambda trial: 
-                            {'alpha': trial.suggest_float('alpha_param_name', 0.1, 1, log=True), 
-                            'beta':  trial.suggest_float('beta_param_name', beta_min, beta_max, log=True),
+                            {'alpha': alpha_value,
+                            'beta':  beta_value,
                             'gamma': trial.suggest_float('focaltverskyloss_gamma', 0.1, 1, log=True)}),
             'ComboLoss' : (smp.utils.losses.ComboLoss, lambda trial: {}),
             'DSCPlusPlusLoss' : (smp.utils.losses.DSCPlusPlusLoss, lambda trial: 
