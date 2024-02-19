@@ -120,7 +120,7 @@ class hypertuner:
         # we set the loss function and parameters, and initialize the loss function in the config directly
         # ugly code but w.e
         # note the correct config name this time :)
-        lossfn = trial.suggest_categorical("loss", ['DSCPlusPlusLoss','DiceLoss', 'TverskyLoss', 'FocalTverskyLoss', 'FocalTverskyPlusPlusLoss', 'ComboLoss', 'FocalTverskyPlusPlusLoss'])
+        lossfn = trial.suggest_categorical("loss", ['DSCPlusPlusLoss','DiceLoss', 'TverskyLoss', 'FocalTverskyLoss', 'FocalTverskyPlusPlusLoss', 'ComboLoss'])
         if lossfn == 'DiceLoss':
             beta = trial.suggest_float('diceloss_beta', 0.1, 1, log=True)
             config.loss_function = smp.utils.losses.DiceLoss(beta=beta)
