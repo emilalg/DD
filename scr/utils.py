@@ -89,7 +89,7 @@ class Config:
     _PROJECT_ROOT = os.path.dirname(os.path.abspath(os.path.join(__file__, os.pardir)))
     activation_function: str = "sigmoid"
     encoder: str = "resnet101"
-    loss_function: str  = "FocalTverskyLoss"
+    loss_function: str  = "DSCPlusPlusLoss"
     learning_rate: float = 0.0001
     learning_scheduler: str = "steplr"
     model_name: str = "double_d"
@@ -112,6 +112,11 @@ class Config:
     affine_shear_limit: tuple = (-15, 15)
     affine_rotate_limit: tuple = (-25, 25)
     probability: int = 1
+
+    #AdamW parameters
+    betas: tuple = (0.9, 0.999)
+    eps: float = 1e-08
+    weight_decay: float = 0.0001
     
 
     def __post_init__(self):
