@@ -98,7 +98,8 @@ def main():
     # define optimizer and lr scheduler which will be used during training
     optimizer = getattr(torch.optim, config.optimizer)(
         [
-            dict(params=model.parameters(), lr=config.learning_rate),
+            #AdamW parameters is {betas: tuple = (0.9, 0.999), eps: float = 1e-08, weight_decay: float = 0.0001}
+            dict(params=model.parameters(), lr=config.learning_rate, betas=config.betas, eps=config.eps, weight_decay=config.weight_decay),
         ]
     )
 
@@ -112,6 +113,8 @@ def main():
         lr_schedular = optim.lr_scheduler.ReduceLROnPlateau(optimizer, factor=0.25, patience=2)
     else:
         lr_schedular = optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=2)
+
+
 
     # create training epoch runners
     # it is a simple loop of iterating over dataloader`s samples
