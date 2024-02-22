@@ -54,6 +54,10 @@ augmented_images_dir = 'breast-density-prediction-test/train/train/images'
 augmented_masks1_dir = 'breast-density-prediction-test/train/train/breast_masks'
 augmented_masks2_dir = 'breast-density-prediction-test/train/train/dense_masks'
 
+# copies the original training data to the augmented directory before applying the augmentation
+if not os.path.exists('breast-density-prediction-test/train'):
+    shutil.copytree('breast-density-prediction/train', 'breast-density-prediction-test/train')
+
 # Ensure the augmented directories exist
 for dir_path in [augmented_images_dir, augmented_masks1_dir, augmented_masks2_dir]:
     if not os.path.exists(dir_path):
