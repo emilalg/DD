@@ -61,7 +61,7 @@ for dir_path in [augmented_images_dir, augmented_masks1_dir, augmented_masks2_di
 
 # copy the train.csv to the augmented directory if it doesn't exist. Hypertuner requires train.csv
 if not os.path.exists('breast-density-prediction-test/train/train.csv'):
-    shutil.copy('/breast-density-prediction/train.csv', '/breast-density-prediction-test/train.csv')
+    shutil.copy('breast-density-prediction/train.csv', 'breast-density-prediction-test/train.csv')
 
 # list of training images and masks
 train_images = os.listdir(train_images_dir)
