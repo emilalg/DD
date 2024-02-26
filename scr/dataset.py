@@ -87,7 +87,7 @@ class MammoDataset(Dataset):
     Mammodataset class it's used for loading and
     transforming mammography images and masks
     """
-    def __init__(self, path, filenames, augmentations=False):
+    def __init__(self, path, filenames):
         """ used to initialize class with required parameters
         :param path: Path to the dataset
         :param dataset: Name of the dataset folder
@@ -96,16 +96,11 @@ class MammoDataset(Dataset):
 
         """
         self.path = path
-        self.augmentations = augmentations
-        #self.augmentation_type = augmentation_type
 
         
         self.images = natsorted([os.path.join(self.path, 'images', filename) for filename in filenames])
         self.masks = natsorted([os.path.join(self.path, 'breast_masks', filename) for filename in filenames])
         self.contours = natsorted([os.path.join(self.path, 'dense_masks', filename) for filename in filenames])
-        #self.images = natsorted(glob.glob(os.path.join(self.path, 'input_images/*')))
-        #self.masks = natsorted(glob.glob(os.path.join(self.path, 'breast_masks/*')))
-        #self.contours = natsorted(glob.glob(os.path.join(self.path, 'images/*')))
         
     def __len__(self):
         """
@@ -131,20 +126,9 @@ class MammoDataset(Dataset):
         # Read breast mask and dense mask
         self.mask = cv2.imread(self.masks[index], 0)
         self.contour = cv2.imread(self.contours[index], 0)
-        
-        # if augmentation is true (defaulted to false) applies the modification of images to increate the size of training data (self.aug_pipeline)
-        if self.augmentations:
-            # Seed for generating random numbers
-            torch.manual_seed(1990)
-            # List containing dense and breast masks
-            masks = [self.mask, self.contour]
-            # Uses the augmentations defined in the config file
-            self.sample = self.augmentations(image=self.image, masks=masks)
-            # Return augmented image if augmentation
-            return self.to_tensor(self.sample['image']), self.to_tensor(self.sample['masks'][0]), self.to_tensor(self.sample['masks'][1])
-        else:
-            # Return non augmented if no augmentation
-            return self.to_tensor(self.image), self.to_tensor(self.mask), self.to_tensor(self.contour)
+
+        # Return the image and corresponding masks
+        return self.to_tensor(self.image), self.to_tensor(self.mask), self.to_tensor(self.contour)
 
 class MammoEvaluation(Dataset):
     def __init__(self, path, mode, ground_truths_path=None, mask_path=None, model_name=None):

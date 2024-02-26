@@ -35,7 +35,6 @@ def main():
     test_dataset = MammoDataset(
             path=config.train_data_path,
             filenames=test_set,
-            augmentations=None,
         )
     test_dataloader = DataLoader(test_dataset, shuffle=True, batch_size =1, num_workers=config.num_workers)
 

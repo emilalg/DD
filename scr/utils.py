@@ -90,12 +90,12 @@ class Config:
     activation_function: str = "sigmoid"
     encoder: str = "resnet101"
     loss_function: str  = "DSCPlusPlusLoss"
-    learning_rate: float = 0.0001
+    learning_rate: float = 0.0001 #0.0001
     learning_scheduler: str = "steplr"
     model_name: str = "double_d"
-    num_epochs: int = 5
-    num_trials: int = 10
-    num_workers: int = 0
+    num_epochs: int = 10 #5
+    num_trials: int = 3
+    num_workers: int = 4
     optimizer: str = "Adam"
     output_path: str = "test_output"
     prediction_data_path: str = "breast-density-prediction/test/test"
@@ -103,16 +103,13 @@ class Config:
     pretrained_weights: str = None
     segmentation_model: str = "Unet"
     # To use the augmented images, change this path to breast-density-prediction-test/train/train
+    #train_data_path: str = "breast-density-prediction/train/train"
     train_data_path: str = "breast-density-prediction-test/train/train"
-    train_batch_size: int = 4
+    train_batch_size: int = 10 #10 #4 #16
     valid_batch_size: int = 4
-    # Image augmnetation parameters, used in get_augmentations function. Starting point
-    use_augmentation: bool = False
-    affine_translate_percent_x_limit: tuple = (-0.15, 0.15)
-    affine_translate_percent_y_limit: tuple = (-0.15, 0.15)
-    affine_shear_limit: tuple = (-15, 15)
-    affine_rotate_limit: tuple = (-25, 25)
-    probability: int = 1
+    #Epochs # train batch size# Learning rate # BEst l1loss
+    #10     # 10              # 0.0001        #  15.6
+    #10     # 4               # 0.001         #
 
     #AdamW parameters
     betas: tuple = (0.9, 0.999)
@@ -211,22 +208,3 @@ def load_config_from_args(config):
         setattr(config, field_name, getattr(args, field_name))
 
     return config
-
-# Function to get augmentations rules. Uses albumentations library. Used in hypertuner.py. Gets the augmentations from the config file.
-def get_augmentations(config):
-    if not config.use_augmentation:
-        return None
-    config = Config()
-    
-    return A.Compose([
-         A.Affine(
-                translate_percent={
-                    "x": (config.affine_translate_percent_x_limit[0], config.affine_translate_percent_x_limit[1]),
-                    "y": (config.affine_translate_percent_y_limit[0], config.affine_translate_percent_y_limit[1]),
-                },
-                shear=(config.affine_shear_limit[0], config.affine_shear_limit[1]),
-                rotate=(config.affine_rotate_limit[0], config.affine_rotate_limit[1]),
-                p=1,
-            ),
-
-    ])
