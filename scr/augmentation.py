@@ -6,11 +6,30 @@ It takes the images and masks from the training data /breast-density-prediction/
 import cv2
 import os
 import uuid
-from albumentations import Compose, HorizontalFlip, Rotate
-from utils import get_augmentations, Config
+import albumentations as A
+from utils import Config
 import shutil
+from tqdm import tqdm
 
 config = Config()
+
+# number of times to loop the augmentation, for example 3 times will create 3 augmented images for each image
+num_augmentations = 3
+
+augmentation = A.Compose([
+    A.Affine(
+                translate_percent={
+                    "x": (-0.15, 0.15),
+                    "y": (-0.15, 0.15),
+                },
+                shear=(-15, 15),
+                rotate=(-25, 25),
+                p=1,
+            ),
+            A.RandomBrightnessContrast(p=0.5),
+            A.Cutout(num_holes=10, max_h_size=20, max_w_size=20, fill_value=0, p=0.4),
+
+])
 
 def augment_and_save(image_path, breast_mask_path, dense_mask_path, save_dirs, augmentation_pipeline):
     """A function to apply the augmentation to the image and masks and save the augmented images and masks in the directories
@@ -38,11 +57,6 @@ def augment_and_save(image_path, breast_mask_path, dense_mask_path, save_dirs, a
     cv2.imwrite(os.path.join(save_dirs['images'], random_filename), cv2.cvtColor(augmented_image, cv2.COLOR_RGB2BGR))
     cv2.imwrite(os.path.join(save_dirs['breast_masks'], random_filename), augmented_breast_mask)
     cv2.imwrite(os.path.join(save_dirs['dense_masks'], random_filename), augmented_dense_mask)
-
-# use augmentation needs to be true to apply the augmentation
-config.use_augmentation = True
-# get the augmentation pipeline from config file
-augmentation_pipeline = get_augmentations(config)
 
 # directories for training data
 train_images_dir = 'breast-density-prediction/train/train/images'
@@ -81,9 +95,12 @@ save_dirs = {
 # applies the augmentatio. FOr loop is used to apply the augmentation multiple times.
 # Looping 3 times creates about 1000 images and masks. 10 times abbout 6000 images and masks
 # looping 10 times takes about 10 minutes, and takes 6gb of storage. So choose wisely :)
-for img_name, breast_mask_name, dense_mask_name in zip(train_images, train_breast_masks, train_dense_masks):
-    for _ in range(3):
-        image_path = os.path.join(train_images_dir, img_name)
-        breast_mask_path = os.path.join(train_breast_masks_dir, breast_mask_name)
-        dense_mask_path = os.path.join(train_dense_masks_dir, dense_mask_name)
-        augment_and_save(image_path, breast_mask_path, dense_mask_path, save_dirs, augmentation_pipeline)
+total_augmentation = len(train_images) * num_augmentations
+with tqdm(total=total_augmentation) as pbar:
+    for img_name, breast_mask_name, dense_mask_name in zip(train_images, train_breast_masks, train_dense_masks):
+        for _ in range(num_augmentations):
+            image_path = os.path.join(train_images_dir, img_name)
+            breast_mask_path = os.path.join(train_breast_masks_dir, breast_mask_name)
+            dense_mask_path = os.path.join(train_dense_masks_dir, dense_mask_name)
+            augment_and_save(image_path, breast_mask_path, dense_mask_path, save_dirs, augmentation)
+            pbar.update(1)
