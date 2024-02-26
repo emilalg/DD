@@ -7,11 +7,8 @@ import cv2
 import os
 import uuid
 import albumentations as A
-from utils import Config
 import shutil
 from tqdm import tqdm
-
-config = Config()
 
 # number of times to loop the augmentation, for example 3 times will create 3 augmented images for each image
 num_augmentations = 3
@@ -37,7 +34,7 @@ def augment_and_save(image_path, breast_mask_path, dense_mask_path, save_dirs, a
     :param breast_mask_path: path to the first mask
     :param dense_mask_path: path to the second mask
     :param save_dirs: contains the paths to save the augmented images and masks
-    :param augmentation_pipeline: the augmenation pipeline to apply to the image and masks located in the config file
+    :param augmentation_pipeline: the augmenation pipeline to apply to the image and masks located in this file as augmentation
     """
     # read the image and masks
     image = cv2.imread(image_path)
