@@ -146,7 +146,7 @@ class hypertuner:
         config.loss_function = self.suggest_loss_params(trial, lossfn)
         
         # run trial
-        out = self.__run(config)
+        out = self.__run(config,trial)
         # save modified config, so we can convert it to a model later ( if its any good :) )
         trial.set_user_attr("config", config)
         # print(f'\n\n out: {out} \n\n')
@@ -156,7 +156,7 @@ class hypertuner:
         return out["mae"]
 
 
-    def __run(self, config: Config):
+    def __run(self, config: Config, trial=None):
 
         DEVICE = self.DEVICE
         dl_train = self.data["train"]["dataloader"]
@@ -239,6 +239,13 @@ class hypertuner:
             print("\nEpoch: {}".format(i))
             train_logs.append(train_epoch.run(dl_train))
             valid_logs.append(valid_epoch.run(dl_valid))
+            # check if should prune the trial using the median of the last 3 fscores
+            if trial is not None:
+                val_loss = valid_logs[i]['fscore']
+                print(f'val_loss: {val_loss}')
+                trial.report(val_loss, i)
+                if trial.should_prune():
+                    raise optuna.TrialPruned()
             
         # run predictions
         mae = process_testsubmission_mode(self.predictions_dataloader, model, self.ground_truths)
@@ -269,7 +276,18 @@ def main():
     print(f'\n\n****** Running {num_trials} trials ******\n\n')
     # we can make a study deterministic by assigning a custom sampler with a set seed
     # does not feel necessary atm
-    study = optuna.create_study(direction='minimize')
+
+    # pruner args:
+    #     n_startup_trials:
+    #         Pruning is disabled until the given number of trials finish in the same study.
+    #     n_warmup_steps:
+    #         Pruning is disabled until the trial exceeds the given number of step. Note that
+    #         this feature assumes that ``step`` starts at zero.
+    #     interval_steps:
+    #         Interval in number of steps between the pruning checks, offset by the warmup steps.
+    #         If no value has been reported at the time of a pruning check, that particular check
+    #         will be postponed until a value is reported.
+    study = optuna.create_study(direction='minimize', pruner=optuna.pruners.MedianPruner(n_startup_trials=1,n_warmup_steps=1, interval_steps=2))
 
     trial_params = ht.trial_params.get_trial_parameters()
  
