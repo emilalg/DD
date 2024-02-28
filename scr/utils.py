@@ -174,7 +174,11 @@ def load_config_from_env(config):
             elif field_type == bool:
                 setattr(config, field_name, field_value.lower() == "true")
             elif field_type == tuple:
-                setattr(config, field_name, tuple(map(field_type, field_value.split(","))))
+                if field_name == "betas":
+                    # Parse the comma-separated values into a tuple of floats
+                    setattr(config, field_name, tuple(map(float, field_value.split(","))))
+                else:
+                    setattr(config, field_name, tuple(map(field_type, field_value.split(","))))
             else:
                 raise ValueError(f"Unsupported field type for {field_name}: {field_type}")
 
