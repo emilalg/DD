@@ -174,7 +174,7 @@ def main():
             # Save best model
             if max_score < valid_logs["fscore"]:
                 max_score = valid_logs["fscore"]
-                torch.save(model, f"test_output/models/{config.model_name}.pth")  # Save model state dict for best performance
+                torch.save(model, os.path.join(config.output_path, f"models/{config.model_name}.pth"))  # Save model state dict for best performance
                 print(f"Best model saved at epoch {i}!")
 
     # Plot accuracy and loss curves
@@ -182,8 +182,8 @@ def main():
 
     timestamp = datetime.datetime.now().strftime("%d-%m_%H-%M")
 
-    accuracyDir = "test_output/logs/accuracy/"
-    lossDir = "test_output/logs/loss"
+    accuracyDir = os.path.join(config.output_path, "logs/accuracy/")
+    lossDir = os.path.join(config.output_path, "logs/loss")
     if not os.path.exists(accuracyDir):
         os.makedirs(accuracyDir)
     if not os.path.exists(lossDir):
@@ -199,7 +199,7 @@ def main():
     plt.title("Accuracy Curve")
     plt.legend()
     # Savefig needs to be called first before show since closing the plt.show() image causes it to be freed from memory
-    plt.savefig(f"test_output/logs/accuracy/{config.model_name}_accuracy_{timestamp}.jpg")
+    plt.savefig(f"{accuracyDir}/{config.model_name}_accuracy_{timestamp}.jpg")
     #plt.show()
     # Plot loss
     plt.plot(epochs, train_loss, label="Train Loss")
@@ -209,7 +209,7 @@ def main():
     plt.ylabel("Loss")
     plt.title("Loss Curve")
     plt.legend()
-    plt.savefig(f"test_output/logs/loss/{config.model_name}_loss_{timestamp}.jpg")
+    plt.savefig(f"{lossDir}/{config.model_name}_loss_{timestamp}.jpg")
     #plt.show()
     
 
