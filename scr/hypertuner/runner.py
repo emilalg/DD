@@ -162,7 +162,7 @@ class Runner:
             # check if should prune the trial using the median of the last 3 fscores
             if trial is not None:
                 val_loss = valid_logs[i]['fscore']
-                print(f'val_loss: {val_loss}')
+                print(f'fscore: {val_loss}')
                 trial.report(val_loss, i)
                 if trial.should_prune():
                     raise optuna.TrialPruned()
