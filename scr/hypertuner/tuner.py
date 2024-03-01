@@ -1,4 +1,5 @@
-import argparse  # for command line arguments
+import argparse
+from distutils import config  # for command line arguments
 import re
 import torch  # for deep learning
 import torch.optim as optim  # for optimization
@@ -50,7 +51,7 @@ class Tuner:
     def load_study(self) -> bool:
         if self.load_type == 'file':
             try:
-                with open(f'{self.output_path}/study.pkl', 'rb') as f:
+                with open(f'{self.output_path}/{self.config.model_name}.pkl', 'rb') as f:
                     self.study = pickle.load(f)
                     print('Study loaded.')
                     return True
@@ -74,7 +75,7 @@ class Tuner:
 
     def callback(self, study, trial):
         print('Callback.')
-        with open(f'{self.output_path}/study.pkl', 'wb') as f:
+        with open(f'{self.output_path}/{self.config.model_name}.pkl', 'wb') as f:
             pickle.dump(study, f)
         
         self.export_logs()
@@ -94,8 +95,8 @@ class Tuner:
         config.optimizer = trial.suggest_categorical("optimizer", ["Adam"])
         config.activation_function = trial.suggest_categorical("activation_function", ["sigmoid"])
 
-        lr_min, lr_max = self.trial_params.lr_min_max
-        config.learning_rate = trial.suggest_float('lr', lr_min, lr_max, log=True)
+        
+        config.learning_rate = trial.suggest_float('lr', config.lr_min, config.lr_max, log=True)
 
         # we set the loss function and parameters, and initialize the loss function in the config directly
         # ugly code but w.e
@@ -146,8 +147,8 @@ class Tuner:
                             'gamma': trial.suggest_float('focaltverskyloss_gamma', 0.1, 1, log=True)}),
             'ComboLoss' : (smp.utils.losses.ComboLoss, lambda trial: {}),
             'DSCPlusPlusLoss' : (smp.utils.losses.DSCPlusPlusLoss, lambda trial: 
-                            {'beta': trial.suggest_float('dscplusplusloss_beta', 0.3, 1, log=True), 
-                             'gamma': trial.suggest_float('dscplusplusloss_gamma', 2, 3, log=True)})
+                            {'beta': trial.suggest_float('dscplusplusloss_beta', self.config.beta_min, self.config.beta_max, log=True), 
+                             'gamma': trial.suggest_float('dscplusplusloss_gamma', self.config.gamma_min, self.config.gamma_max, log=True)})
         }
 
         # Suggest parameters and instantiate the loss function

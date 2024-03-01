@@ -116,6 +116,14 @@ class Config:
     betas: tuple = (0.9, 0.999)
     eps: float = 1e-08
     weight_decay: float = 0.0001
+
+    #hypertuner
+    lr_min: float = 0.0001
+    lr_max: float = 0.0009
+    beta_min: float = 0.1
+    beta_max: float = 0.99
+    gamma_min: float = 0.5
+    gamma_max: float = 3.5
     
 
     def __post_init__(self):
