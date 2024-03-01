@@ -41,7 +41,7 @@ class Tuner:
         test = os.path.join(self.output_path, "/hypertuner.txt")
 
     def create_study(self) -> optuna.Study:
-        self.study = optuna.create_study(direction=self.direction, pruner=optuna.pruners.MedianPruner(n_startup_trials=1,n_warmup_steps=1, interval_steps=2))
+        self.study = optuna.create_study(direction=self.direction, pruner=optuna.pruners.MedianPruner(n_startup_trials=1,n_warmup_steps=1, interval_steps=self.config.pruning_interval))
         trial_params = self.trial_params.get_trial_parameters()
         print(f'Adding enqueue trial with parameters: {trial_params}')
         self.study.enqueue_trial(trial_params)
