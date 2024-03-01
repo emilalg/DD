@@ -72,18 +72,19 @@ class Tuner:
         return self.create_study()
 
 
-    def callback(self, study, trial):
-        print('Callback.')
+    def callback(self, study: optuna.study.Study, trial: optuna.trial.FrozenTrial):
         with open(f'{self.output_path}/study.pkl', 'wb') as f:
             pickle.dump(study, f)
         
-        self.export_logs()
+        if trial.state == optuna.trial.TrialState.COMPLETE:
+            self.export_logs()
 
-        if study.best_trial.number == trial.number:
-            # saving best model
-            print(f'Saving model for trial {trial.number}')
-            self.export_model()
+            if study.best_trial.number == trial.number:
+                # saving best model
+                print(f'Saving model for trial {trial.number}')
+                self.export_model()
 
+        
 
     def run_trial(self, trial):
         # deepcopy so that we do not accidentally modify base config
