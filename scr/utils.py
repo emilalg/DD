@@ -120,6 +120,8 @@ class Config:
     #hypertuner
     lr_min: float = 0.0001
     lr_max: float = 0.0009
+    alpha_min: float = 0.1
+    alpha_max: float = 0.99
     beta_min: float = 0.1
     beta_max: float = 0.99
     gamma_min: float = 0.5

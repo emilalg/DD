@@ -124,7 +124,7 @@ class Tuner:
         alpha_param_name = f'{loss_name.lower()}_alpha'
         beta_param_name = f'{loss_name.lower()}_beta'
 
-        alpha_value = trial.suggest_float(alpha_param_name, 0.1, 1, log=True)
+        alpha_value = trial.suggest_float(alpha_param_name, self.config.alpha_min, self.config.alpha_max, log=True)
        
         beta_min = 1 - alpha_value  
         beta_max = 1 - alpha_value  
