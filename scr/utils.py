@@ -102,9 +102,10 @@ class Config:
     prediction_mode: str = "testsubmission"
     pretrained_weights: str = None
     segmentation_model: str = "Unet"
+    study_name: str = "Default"
     # To use the augmented images, change this path to breast-density-prediction-test/train/train
-    #train_data_path: str = "breast-density-prediction/train/train"
-    train_data_path: str = "breast-density-prediction-test/train/train"
+    train_data_path: str = "breast-density-prediction/train/train"
+    #train_data_path: str = "breast-density-prediction-test/train/train"
     train_batch_size: int = 10 #10 #4 #16
     valid_batch_size: int = 4
     #Epochs # train batch size# Learning rate # BEst l1loss
