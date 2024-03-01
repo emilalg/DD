@@ -126,6 +126,7 @@ class Config:
     beta_max: float = 0.99
     gamma_min: float = 0.5
     gamma_max: float = 3.5
+    pruning_interval: int = 6
     
 
     def __post_init__(self):
