@@ -116,9 +116,11 @@ def process_testsubmission_mode(dataloader, model, ground_truths):
 
     # Extract the metric names from the dictionary keys to use in the log files' headers
     test_header_names = test_header_indexs.keys()
-
+    
+    config = Config()
+    
     # Open a file for appending results; one for general metrics
-    with open("test_output/test/report.txt", "a+") as logs_file, open("test_output/test/report_density_difference.txt", "a+") as density_file:
+    with open(os.path.join(config.output_path, "test/report.txt"), "a+") as logs_file, open(os.path.join(config.output_path, "test/report_density_difference.txt"), "a+") as density_file:
         # Reading existing content to avoid overwriting
         logs_file.seek(0)
         existing_content = logs_file.read().strip()
