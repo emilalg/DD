@@ -171,12 +171,13 @@ class Tuner:
         outfile = open(f"{self.output_path}/hypertuner.txt", "w+") 
         outfile.write(f'Best parameters: {json.dumps(study.best_params, default=str, indent=4, sort_keys=True)} \n\n')
         for trial in trials:
-            out = {
-                "trial_nro": trial.number,
-                "value": trial.value,
-                "parameters" : trial.params,
-                "metrics" : trial.user_attrs["metrics"]
-            }
-            outfile.write(json.dumps(out, default=str, indent=4, sort_keys=True))
-            outfile.write('\n')
+            if trial.state == optuna.trial.TrialState.COMPLETE:
+                out = {
+                    "trial_nro": trial.number,
+                    "value": trial.value,
+                    "parameters" : trial.params,
+                    "metrics" : trial.user_attrs["metrics"]
+                    }
+                outfile.write(json.dumps(out, default=str, indent=4, sort_keys=True))
+                outfile.write('\n')
         outfile.close()
