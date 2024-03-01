@@ -22,7 +22,7 @@ class Runner:
     trial_params = None 
     
     data = None
-    DEVICE = None
+    DEVICE: torch.device
 
     def __init__(self, config: Config):   
         self.config = config
@@ -170,21 +170,28 @@ class Runner:
         # run predictions
         mae = None
 
+        metrics = copy.deepcopy(valid_logs).pop()
+
         # :)
-        if torch.cuda.is_available() == False:
+        if self.DEVICE.type != 'cuda':
+            print(f'Warning: Using l1 loss instead of MAE.')
             vlc = copy.deepcopy(valid_logs)
             mae = vlc.pop()["l1_loss"]
         else:
             mae = process_testsubmission_mode(self.predictions_dataloader, model, self.ground_truths)
+            metrics["mae"] = mae
 
         print(f'\n Mean Absolute Error: {mae} \n')
+
+        
 
         out = {
             "train_logs": train_logs,
             "valid_logs": valid_logs,
             "model" : model,
             "mae": mae,
-            "model": model
+            "model": model,
+            "metrics": metrics
         }
         return out
         

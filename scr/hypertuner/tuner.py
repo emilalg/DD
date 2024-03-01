@@ -39,7 +39,6 @@ class Tuner:
         self.trial_params = TrialParameters(loss=self.config.loss_function)
         torch.manual_seed(1990)
         test = os.path.join(self.output_path, "/hypertuner.txt")
-        print(f'agony {self.output_path + "/hypertuner.txt"}')
 
     def create_study(self) -> optuna.Study:
         self.study = optuna.create_study(direction=self.direction, pruner=optuna.pruners.MedianPruner(n_startup_trials=1,n_warmup_steps=1, interval_steps=2))
@@ -82,6 +81,7 @@ class Tuner:
 
         if study.best_trial.number == trial.number:
             # saving best model
+            print(f'Saving model for trial {trial.number}')
             self.export_model()
 
 
@@ -106,8 +106,8 @@ class Tuner:
         
         # run trial
         out = self.runner.run(config,trial)
-        # save modified config, so we can convert it to a model later ( if its any good :) )
-        trial.set_user_attr("config", config)
+
+        trial.set_user_attr("metrics", out["metrics"])
         # print(f'\n\n out: {out} \n\n')
         # print(f'\n\n MAE: {out["mae"]} \n\n')
 
@@ -160,7 +160,6 @@ class Tuner:
     
     def export_model(self):
         # train and save model based on a config
-        print(f'Saving model')
         torch.save(self.temp_model, f"{self.output_path}/{self.config.model_name}.pth")
 
     def export_logs(self):
@@ -173,8 +172,9 @@ class Tuner:
         for trial in trials:
             out = {
                 "trial_nro": trial.number,
-                "Mae": trial.value,
-                "parameters" : trial.params
+                "value": trial.value,
+                "parameters" : trial.params,
+                "metrics" : trial.user_attrs["metrics"]
             }
             outfile.write(json.dumps(out, default=str, indent=4, sort_keys=True))
             outfile.write('\n')

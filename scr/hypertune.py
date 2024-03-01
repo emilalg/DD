@@ -20,22 +20,9 @@ from hypertuner.tuner import Tuner
 def main():    
     # initalize hypertuner
     ht = Tuner()
-    config = ht.config
     num_trials = ht.config.num_trials
     print(f'\n\n****** Running {num_trials} trials ******\n\n')
-    # we can make a study deterministic by assigning a custom sampler with a set seed
-    # does not feel necessary atm
 
-    # pruner args:
-    #     n_startup_trials:
-    #         Pruning is disabled until the given number of trials finish in the same study.
-    #     n_warmup_steps:
-    #         Pruning is disabled until the trial exceeds the given number of step. Note that
-    #         this feature assumes that ``step`` starts at zero.
-    #     interval_steps:
-    #         Interval in number of steps between the pruning checks, offset by the warmup steps.
-    #         If no value has been reported at the time of a pruning check, that particular check
-    #         will be postponed until a value is reported.
     study = ht.get_study()
 
     # some params to improve the search efficiency perhaps ? :)
@@ -43,9 +30,6 @@ def main():
     # because of the queued trial, n_trials should be the number you want to run +1
     study.optimize(ht.run_trial, n_trials=num_trials, callbacks=[ht.callback])
 
-
-    
-
-    
+  
 if __name__ == "__main__":
     main()
