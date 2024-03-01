@@ -28,11 +28,9 @@ scr/autoalbument-config-search-cifar10/outputs/*
 /test_output/models/*
 /test_output/test/*
 /test_output/unet_aug_predictions/*
-/test_output/hypertuner/*
 
 # But re-include the .gitignore and .gitkeep files in each
 !**/*.gitkeep
 
-test_output/**/*
 
 .vscode/*
