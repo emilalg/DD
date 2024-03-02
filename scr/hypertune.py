@@ -30,6 +30,8 @@ def main():
     # because of the queued trial, n_trials should be the number you want to run +1
     study.optimize(ht.run_trial, n_trials=num_trials, callbacks=[ht.callback])
 
+    print('Study ran succesfully, exiting...')
+
   
 if __name__ == "__main__":
     main()

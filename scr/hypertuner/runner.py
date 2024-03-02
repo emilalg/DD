@@ -15,6 +15,7 @@ import optuna
 import copy
 import json
 from trial_parameters import TrialParameters
+import numpy as np
 
 class Runner:
 
@@ -160,11 +161,23 @@ class Runner:
             train_logs.append(train_epoch.run(dl_train))
             valid_logs.append(valid_epoch.run(dl_valid))
             # check if should prune the trial using the median of the last 3 fscores
+            # also prune if nan values exist
             if trial is not None:
                 val_loss = valid_logs[i]['fscore']
                 print(f'fscore: {val_loss}')
                 trial.report(val_loss, i)
                 if trial.should_prune():
+                    raise optuna.TrialPruned()
+                
+                # scuffed nan check
+                last_t_log = train_logs[-1]
+                last_v_log = valid_logs[-1]
+
+                t_contains_nan = np.any(np.isnan(list(last_t_log.values())))
+                v_contains_nan = np.any(np.isnan(list(last_v_log.values())))
+
+                if t_contains_nan or v_contains_nan:
+                    print('Pruning nan.')
                     raise optuna.TrialPruned()
         
         # run predictions
