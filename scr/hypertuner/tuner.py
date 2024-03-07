@@ -17,6 +17,8 @@ from trial_parameters import TrialParameters
 from .runner import Runner
 from utils import makedirs
 import pickle
+from collections import OrderedDict
+from tunerlogging import export_logs
 
 class Tuner:
 
@@ -77,7 +79,7 @@ class Tuner:
             pickle.dump(study, f)
         
         if trial.state == optuna.trial.TrialState.COMPLETE:
-            self.export_logs()
+            self.create_log()
 
             if study.best_trial.number == trial.number:
                 # saving best model
@@ -162,21 +164,6 @@ class Tuner:
         # train and save model based on a config
         torch.save(self.temp_model, f"{self.output_path}/{self.config.model_name}.pth")
 
-    def export_logs(self):
-        study = self.study
-        trials = study.get_trials()
 
-        # write to log file
-        outfile = open(f"{self.output_path}/hypertuner.txt", "w+") 
-        outfile.write(f'Best parameters: {json.dumps(study.best_params, default=str, indent=4, sort_keys=True)} \n\n')
-        for trial in trials:
-            if trial.state == optuna.trial.TrialState.COMPLETE:
-                out = {
-                    "trial_nro": trial.number,
-                    "value": trial.value,
-                    "parameters" : trial.params,
-                    "metrics" : trial.user_attrs["metrics"]
-                    }
-                outfile.write(json.dumps(out, default=str, indent=4, sort_keys=True))
-                outfile.write('\n')
-        outfile.close()
+    def create_log(self):
+        export_logs(self.study, self.output_path, self.config.model_name)
