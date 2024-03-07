@@ -18,6 +18,7 @@ from .runner import Runner
 from utils import makedirs
 import pickle
 from collections import OrderedDict
+from tunerlogging import export_logs
 
 class Tuner:
 
@@ -78,7 +79,7 @@ class Tuner:
             pickle.dump(study, f)
         
         if trial.state == optuna.trial.TrialState.COMPLETE:
-            self.export_logs()
+            self.create_log()
 
             if study.best_trial.number == trial.number:
                 # saving best model
@@ -163,48 +164,6 @@ class Tuner:
         # train and save model based on a config
         torch.save(self.temp_model, f"{self.output_path}/{self.config.model_name}.pth")
 
-    def export_logs(self):
-        study = self.study
-        trials = study.get_trials(states=[optuna.trial.TrialState.COMPLETE])
-        
-        sorted_trials = sorted(trials, key=lambda trial: trial.value, reverse=False) #muista Otto nyt pienempi on parempi (True -> False)
 
-        best_models_path = f"{self.output_path}/{self.config.model_name}_bestThreeModels.txt"
-        try:
-            with open(best_models_path, "r") as best_models_file:
-                existing_best = [json.loads(line) for line in best_models_file if line.strip()]
-            existing_best_trials = {eb["trial_number"]: eb for eb in existing_best}
-        except FileNotFoundError:
-            existing_best_trials = {}
-        except json.decoder.JSONDecodeError as e:
-            print(f"Error reading {best_models_path}: {e}")
-            existing_best_trials = {}
-
-        new_best = False
-        for trial in sorted_trials[:3]:
-            if trial.number not in existing_best_trials or trial.value > existing_best_trials[trial.number].get("value", 0):
-                new_best = True
-                break
-        
-        if new_best:
-            with open(best_models_path, "w") as best_models_file:
-                for rank, trial in enumerate(sorted_trials[:3], start=1):
-                    metrics = trial.user_attrs.get("metrics", "Metrics not recorded")
-                    trial_info = OrderedDict([
-                        ("rank", rank),
-                        ("trial_number", trial.number),
-                        ("value", trial.value),
-                        ("parameters", trial.params),
-                        ("metrics", metrics)
-                    ])
-                    best_models_file.write(json.dumps(trial_info, default=str, indent=4) + '\n')
-
-        with open(f"{self.output_path}/{self.config.model_name}.txt", "a+") as outfile:
-            for trial in trials:
-                trial_info = OrderedDict([
-                    ("trial_number", trial.number),
-                    ("value", trial.value),
-                    ("parameters", trial.params),
-                    ("metrics", trial.user_attrs.get("metrics", "Metrics not recorded"))
-                ])
-                outfile.write(json.dumps(trial_info, default=str, indent=4) + '\n')
+    def create_log(self):
+        export_logs(self.study, self.output_path, self.config.model_name)
