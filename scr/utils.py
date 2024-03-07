@@ -127,6 +127,8 @@ class Config:
     gamma_min: float = 0.5
     gamma_max: float = 3.5
     pruning_interval: int = 6
+    ce_ratio: float = 0.5
+    smooth: float = 1.0
 
     def __post_init__(self):
         self = load_config_from_env(self)

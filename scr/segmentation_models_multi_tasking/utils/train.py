@@ -151,7 +151,7 @@ class TrainEpoch(Epoch):
         loss2 = self.loss(prediction2, z)
 
         weighted_loss = multitask_loss(loss1, loss2)
-        #weighted_loss = weighted_loss.to('cuda')
+        #weighted_loss = weighted_loss.to('cuda')  Otto kato tää!
 
         #beta = 0.6
         #weighted_loss = beta*loss1 + (1-beta)*loss2

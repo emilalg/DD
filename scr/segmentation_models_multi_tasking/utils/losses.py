@@ -230,7 +230,7 @@ class BCEWithLogitsLoss(nn.BCEWithLogitsLoss, base.Loss):
 ALPHA = 0.5 # < 0.5 penalises FP more, > 0.5 penalises FN more
 BETA = 0.5
 CE_RATIO = 0.5 #weighted contribution of modified CE loss compared to Dice loss
-e = eps=1e-7
+eps=1e-7
 """
 Created on [04.02.2024]
 
@@ -250,12 +250,22 @@ and cross-entropy components to the final loss value.
 
 """
 class ComboLoss(base.Loss):
-    def __init__(self, weight=None, size_average=True):
+    def __init__(self, alpha, beta, smooth=None, ce_ratio=None, weight=None, size_average=True):
         super(ComboLoss, self).__init__()
+        self.alpha = alpha # weight parameter for the Dice loss
+        self.beta = beta
+        self.weight = weight
+        self.size_average = size_average
+        #self.smooth = smooth
+        #self.ce_ratio = ce_ratio
+        self.K_smooth = 1
+        self.K_ce_ratio = 0.4
+        
+        self.eps=1e-7
         # weight parameter for weighted cross-entropy loss
         # size_average to average the loss over the batch
 
-    def forward(self, inputs, targets, smooth=1, alpha=0.5, beta=BETA, CE_RATIO=0.5):
+    def forward(self, inputs, targets):
         # Calculate the Combo loss given the inputs and targets,
         # where 'inputs' are the predicted probabilities from the model
         # and 'targets' are the true labels.
@@ -269,17 +279,17 @@ class ComboLoss(base.Loss):
         intersection = (inputs * targets).sum()    
         # Calculate the Dice score, which is a measure of overlap between the
         # predicted segmentation and the ground truth. 
-        dice = (2. * intersection + smooth) / (inputs.sum() + targets.sum() + smooth)
+        dice = (2. * intersection + self.K_smooth) / (inputs.sum() + targets.sum() + self.K_smooth)
         
         # Clamp the inputs to avoid log(0) which would result in NaN.
         # 'e' should be a small constant (e.g., 1e-7).
-        inputs = torch.clamp(inputs, e, 1.0 - e)       
+        inputs = torch.clamp(inputs, self.eps, 1.0 - self.eps)       
         # Calculate the weighted cross-entropy loss.
-        out = - (alpha * ((targets * torch.log(inputs)) + ((1 - alpha) * (1.0 - targets) * torch.log(1.0 - inputs))))
+        out = - (self.alpha * ((targets * torch.log(inputs)) + ((1 - self.alpha) * (1.0 - targets) * torch.log(1.0 - inputs))))
         # Take the mean of the weighted cross-entropy loss across all observations.
         weighted_ce = out.mean(-1)
         # Combine the weighted cross-entropy loss with the Dice loss.
-        combo = (CE_RATIO * weighted_ce) + ((1 - CE_RATIO) * dice)
+        combo = (self.K_ce_ratio * weighted_ce) + ((1 - self.K_ce_ratio) * dice)
         
         # Return the combined loss.
         return combo

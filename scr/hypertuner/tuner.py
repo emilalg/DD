@@ -17,8 +17,8 @@ from trial_parameters import TrialParameters
 from .runner import Runner
 from utils import makedirs
 import pickle
-from collections import OrderedDict
 from tunerlogging import export_logs
+from loss_O_simplifyer_O_ import LossSimplifyer
 
 class Tuner:
 
@@ -39,6 +39,7 @@ class Tuner:
         self.output_path = f'{self.config.output_path}/hypertuner/{self.config.study_name}'
         makedirs(f'{self.output_path}/')
         self.trial_params = TrialParameters(loss=self.config.loss_function)
+        self.loss_simplifyer = LossSimplifyer(self.config)
         torch.manual_seed(1990)
         test = os.path.join(self.output_path, "/hypertuner.txt")
 
@@ -104,7 +105,7 @@ class Tuner:
         # note the correct config name this time :)
         lossfn = config.loss_function
         
-        config.loss_function = self.suggest_loss_params(trial, lossfn)
+        config.loss_function = self.loss_simplifyer.suggest_loss_params(trial, lossfn)
         
         # run trial
         out = self.runner.run(config,trial)
@@ -118,47 +119,6 @@ class Tuner:
 
         # return float to optuna optimizer call
         return out["mae"]
-
-    def suggest_loss_params(self, trial, lossfn):
-
-        loss_name = lossfn
-
-        alpha_param_name = f'{loss_name.lower()}_alpha'
-        beta_param_name = f'{loss_name.lower()}_beta'
-
-        alpha_value = trial.suggest_float(alpha_param_name, self.config.alpha_min, self.config.alpha_max, log=True)
-       
-        beta_min = 1 - alpha_value  
-        beta_max = 1 - alpha_value  
-
-        beta_value = trial.suggest_float(beta_param_name, beta_min, beta_max, log=True)
-        
-        loss_functions = {
-            'Diceloss' : (smp.utils.losses.DiceLoss, lambda trial: {'beta': trial.suggest_float('diceloss_beta', 0.1, 1, log=True)}),
-            'TverskyLoss' : (smp.utils.losses.TverskyLoss, lambda trial:
-                            {'alpha': alpha_value, 
-                            'beta': beta_value}),
-            'FocalTverskyLoss': (smp.utils.losses.FocalTverskyLoss, lambda trial: 
-                            {'alpha': alpha_value, 
-                            'beta': beta_value, 
-                            'gamma': trial.suggest_float('focaltverskyloss_gamma', 0.1, 3, log=True)}),
-            'FocalTverskyPlusPlusLoss' : (smp.utils.losses.FocalTverskyPlusPlusLoss, lambda trial: 
-                            {'alpha': alpha_value,
-                            'beta':  beta_value,
-                            'gamma': trial.suggest_float('focaltverskyloss_gamma', 0.1, 1, log=True)}),
-            'ComboLoss' : (smp.utils.losses.ComboLoss, lambda trial: {}),
-            'DSCPlusPlusLoss' : (smp.utils.losses.DSCPlusPlusLoss, lambda trial: 
-                            {'beta': trial.suggest_float('dscplusplusloss_beta', self.config.beta_min, self.config.beta_max, log=True), 
-                             'gamma': trial.suggest_float('dscplusplusloss_gamma', self.config.gamma_min, self.config.gamma_max, log=True)})
-        }
-
-        # Suggest parameters and instantiate the loss function
-        if lossfn in loss_functions:
-            loss_class, params_func = loss_functions[lossfn]
-            params = params_func(trial)
-            return loss_class(**params)
-
-        raise ValueError(f"Unknown loss function: {lossfn}")
     
     def export_model(self):
         # train and save model based on a config
