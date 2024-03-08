@@ -18,7 +18,7 @@ from .runner import Runner
 from utils import makedirs
 import pickle
 from tunerlogging import export_logs
-from loss_O_simplifyer_O_ import LossSimplifyer
+from trial_O_builder_O_ import TrialBuilder
 
 class Tuner:
 
@@ -39,7 +39,7 @@ class Tuner:
         self.output_path = f'{self.config.output_path}/hypertuner/{self.config.study_name}'
         makedirs(f'{self.output_path}/')
         self.trial_params = TrialParameters(loss=self.config.loss_function)
-        self.loss_simplifyer = LossSimplifyer(self.config)
+        self.trial_builder = TrialBuilder(self.config)
         torch.manual_seed(1990)
         test = os.path.join(self.output_path, "/hypertuner.txt")
 
@@ -105,7 +105,7 @@ class Tuner:
         # note the correct config name this time :)
         lossfn = config.loss_function
         
-        config.loss_function = self.loss_simplifyer.suggest_loss_params(trial, lossfn)
+        config.loss_function = self.trial_builder.suggest_loss_params(trial, lossfn)
         
         # run trial
         out = self.runner.run(config,trial)
