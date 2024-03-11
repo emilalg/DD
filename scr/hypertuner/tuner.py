@@ -29,13 +29,17 @@ class Tuner:
     output_path = None
     direction = 'minimize'
     load_type = 'file'
+    db_url = None
 
     temp_model = None
 
-    def __init__(self, load_type='file', direction='minimize'):   
+    def __init__(self, direction='minimize'):   
         
         self.direction = direction
-        self.load_type = load_type
+
+        self.load_type = self.config.load_type
+        self.db_url = self.config.db_url  
+
         self.output_path = f'{self.config.output_path}/hypertuner/{self.config.study_name}'
         makedirs(f'{self.output_path}/')
         self.trial_params = TrialParameters(loss=self.config.loss_function)
@@ -44,7 +48,18 @@ class Tuner:
         test = os.path.join(self.output_path, "/hypertuner.txt")
 
     def create_study(self) -> optuna.Study:
-        self.study = optuna.create_study(direction=self.direction, pruner=optuna.pruners.MedianPruner(n_startup_trials=1,n_warmup_steps=1, interval_steps=self.config.pruning_interval))
+        if self.load_type == 'sql' and self.db_url:
+            self.study = optuna.create_study(direction=self.direction, 
+                                             pruner=optuna.pruners.MedianPruner(n_startup_trials=1, n_warmup_steps=1, interval_steps=self.config.pruning_interval), 
+                                             study_name=self.config.study_name, 
+                                             storage=self.db_url,
+                                             load_if_exists=True)
+            print('Created study with sql')
+        else:
+            self.study = optuna.create_study(direction=self.direction, 
+                                             pruner=optuna.pruners.MedianPruner(n_startup_trials=1, n_warmup_steps=1, interval_steps=self.config.pruning_interval), 
+                                             study_name=self.config.study_name)
+            print('Created study with file')
         trial_params = self.trial_params.get_trial_parameters()
         print(f'Adding enqueue trial with parameters: {trial_params}')
         self.study.enqueue_trial(trial_params)
@@ -60,8 +75,16 @@ class Tuner:
             except:
                 print('Study not found.')
                 return False
+        elif self.load_type == 'sql' and self.db_url:
+            try:
+                self.study = optuna.load_study(study_name=self.config.study_name, storage=self.db_url)
+                print('Study loaded from SQL database.')
+                return True
+            except Exception as e:
+                print(f'Failed to load study from SQL database: {e}')
+                return False
         else:
-            print('Sql loading not implemented yet')
+            print('Invalid load type or missing database URL.')
             return False
 
     """
@@ -76,11 +99,14 @@ class Tuner:
 
 
     def callback(self, study: optuna.study.Study, trial: optuna.trial.FrozenTrial):
-        with open(f'{self.output_path}/{self.config.model_name}.pkl', 'wb') as f:
-            pickle.dump(study, f)
+
+        if self.load_type == 'file':
+            with open(f'{self.output_path}/{self.config.model_name}.pkl', 'wb') as f:
+                pickle.dump(study, f)
         
         if trial.state == optuna.trial.TrialState.COMPLETE:
-            self.create_log()
+            if self.load_type == 'file':
+                self.create_log()
 
             if study.best_trial.number == trial.number:
                 # saving best model
