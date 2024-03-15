@@ -110,9 +110,8 @@ class Tuner:
                 pickle.dump(study, f)
         
         if trial.state == optuna.trial.TrialState.COMPLETE:
-            if self.load_type == 'file':
-                self.create_log()
-
+            self.create_log()
+                
             if study.best_trial.number == trial.number:
                 # saving best model
                 print(f'Saving model for trial {trial.number}')
