@@ -152,7 +152,7 @@ class MammoEvaluation(Dataset):
 
         if mode == 'submission':
             # In submission mode, load all test images
-            self.images = natsorted(glob.glob(config.prediction_data_path, 'images', '*'))
+            self.images = natsorted(glob.glob(os.path.join(config.prediction_data_path, 'images', '*')))
         elif mode == 'testsubmission':
             # In testsubmission mode, load images as per ground_truths (train.csv)
             with open(self.ground_truths_path, 'r') as f:
