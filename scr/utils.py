@@ -113,7 +113,7 @@ class Config:
     #10     # 4               # 0.001         #
 
     db_url: str = None
-    load_type:str = "file"
+    load_type: str = "file"
 
     #AdamW parameters
     betas: tuple = (0.9, 0.999)

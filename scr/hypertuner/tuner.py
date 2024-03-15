@@ -37,7 +37,9 @@ class Tuner:
         
         self.direction = direction
 
-        self.load_type = self.config.load_type
+        self.load_type = self.config.load_type if self.config.load_type == "sql" else "file"
+
+        print(f'Initial load_type: {self.load_type}')
 
         # just in case
         if self.load_type == None:
