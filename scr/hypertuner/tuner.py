@@ -38,6 +38,11 @@ class Tuner:
         self.direction = direction
 
         self.load_type = self.config.load_type
+
+        # just in case
+        if self.load_type == None:
+            self.load_type == "file"
+
         self.db_url = self.config.db_url  
 
         self.output_path = f'{self.config.output_path}/hypertuner/{self.config.study_name}'
