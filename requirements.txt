@@ -15,4 +15,4 @@ tqdm==4.65.0
 python-dotenv==1.0.1
 #I installed optuna through conda, so you should too :)
 #optuna
-psycopg2-binary
+psycopg2-binary==2.9.9
