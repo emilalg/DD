@@ -58,6 +58,7 @@ import csv
 
 def process_submission_mode(dataloader, model):
     output_path = "test_output/submission/submission.csv"
+    os.makedirs(os.path.dirname(output_path), exist_ok=True)
     with open(output_path, "w") as file:
         file.write("Filename,Density\n")
 
