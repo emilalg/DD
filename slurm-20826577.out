@@ -1,0 +1,6 @@
+NOTE: This module uses Apptainer (Singularity). Some commands execute inside
+the container (e.g. python3, pip3).
+
+/appl/soft/ai/bin/python3: can't open file '/users/eetusoro/project_2009901/seriaaliajot/pumpingironpower/alpha/scr/hypertune.py': [Errno 2] No such file or directory
+srun: error: r02g05: task 0: Exited with exit code 2
+srun: Terminating StepId=20826577.0

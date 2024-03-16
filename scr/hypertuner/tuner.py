@@ -127,8 +127,9 @@ class Tuner:
         
         # Now we modify the hyper params in the config with Optuna
         # These are passed through the trial parameter
-        config.optimizer = trial.suggest_categorical("optimizer", ["Adam"])
-        config.activation_function = trial.suggest_categorical("activation_function", ["sigmoid"])
+        
+        # config.optimizer = trial.suggest_categorical("optimizer", ["Adam"])
+        # config.activation_function = trial.suggest_categorical("activation_function", ["sigmoid"])
 
         config.learning_rate = trial.suggest_float('lr', config.lr_min, config.lr_max, log=True)
 
