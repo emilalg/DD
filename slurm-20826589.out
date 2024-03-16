@@ -1,67 +1,0 @@
-NOTE: This module uses Apptainer (Singularity). Some commands execute inside
-the container (e.g. python3, pip3).
-
-[I 2024-03-16 14:22:53,255] A new study created in memory with name: eetu_alpha_ajo
-Device: cuda
-/projappl/project_2009901/seriaaliajot/pumpingironpower/Alpha/../../_breast-density-prediction/train/train
-Total images loaded: 149
-Total breast masks loaded: 149
-Total dense masks loaded: 149
-Initial load_type: file
- [*] Make directories : /projappl/project_2009901/seriaaliajot/pumpingironpower/Alpha/test_output/hypertuner/eetu_alpha_ajo/
-
-
-****** Running 100 trials ******
-
-
-Study not found.
-Created study with file
-Adding enqueue trial with parameters: {'optimizer': 'Adam', 'loss': 'DSCPlusPlusLoss', 'activation_function': 'sigmoid', 'lr': 0.001, 'dscplusplusloss_beta': 0.8, 'dscplusplusloss_gamma': 2.6}
-Executing with config Config(
-activation_function=sigmoid,
-encoder=resnet101,
-loss_function=DSCPlusPlusLoss(
-  (activation): Activation(
-    (activation): Identity()
-  )
-),
-learning_rate=0.001,
-learning_scheduler=reducer,
-model_name=eetu_alpha_ajo,
-num_epochs=20,
-num_trials=100,
-num_workers=4,
-optimizer=AdamW,
-output_path=/projappl/project_2009901/seriaaliajot/pumpingironpower/Alpha/test_output,
-prediction_data_path=/projappl/project_2009901/seriaaliajot/pumpingironpower/Alpha/../../_breast-density-prediction/test/test,
-prediction_mode=testsubmission,
-pretrained_weights=None,
-segmentation_model=Unet,
-study_name=eetu_alpha_ajo,
-train_data_path=/projappl/project_2009901/seriaaliajot/pumpingironpower/Alpha/../../_breast-density-prediction/train/train,
-train_batch_size=60,
-valid_batch_size=15,
-db_url=postgresql+psycopg2://postgres:medintelligence@20.123.49.199:5432/postgres,
-load_type=file,
-betas=(0.9, 0.999),
-eps=1e-08,
-weight_decay=0.001,
-lr_min=0.0001,
-lr_max=0.0009,
-alpha_min=0.1,
-alpha_max=0.99,
-beta_min=0.1,
-beta_max=0.3,
-gamma_min=1.0,
-gamma_max=1.5,
-pruning_interval=6,
-ce_ratio=0.5,
-smooth=1.0
-)
-
-Epoch: 0
-train:   0%|          | 0/8 [00:00<?, ?it/s]train:   0%|          | 0/8 [00:20<?, ?it/s, dsc_plus_plus_loss_breast - 0.6396, dsc_plus_plus_loss_dense - 0.9304, dsc_plus_plus_loss_weighted - 1.57, l1_loss - 0.7651, precision - 0.092, recall - 0.5409, accuracy - 0.4929, fscore - 0.1572, iou_score - 0.08742]train:  12%|█▎        | 1/8 [00:20<02:23, 20.46s/it, dsc_plus_plus_loss_breast - 0.6396, dsc_plus_plus_loss_dense - 0.9304, dsc_plus_plus_loss_weighted - 1.57, l1_loss - 0.7651, precision - 0.092, recall - 0.5409, accuracy - 0.4929, fscore - 0.1572, iou_score - 0.08742]train:  12%|█▎        | 1/8 [00:21<02:23, 20.46s/it, dsc_plus_plus_loss_breast - 0.6185, dsc_plus_plus_loss_dense - 0.9302, dsc_plus_plus_loss_weighted - 1.549, l1_loss - 0.753, precision - 0.116, recall - 0.6033, accuracy - 0.558, fscore - 0.1942, iou_score - 0.1106]  train:  25%|██▌       | 2/8 [00:21<00:54,  9.02s/it, dsc_plus_plus_loss_breast - 0.6185, dsc_plus_plus_loss_dense - 0.9302, dsc_plus_plus_loss_weighted - 1.549, l1_loss - 0.753, precision - 0.116, recall - 0.6033, accuracy - 0.558, fscore - 0.1942, iou_score - 0.1106]train:  25%|██▌       | 2/8 [00:22<00:54,  9.02s/it, dsc_plus_plus_loss_breast - 0.5879, dsc_plus_plus_loss_dense - 0.9194, dsc_plus_plus_loss_weighted - 1.507, l1_loss - 0.7306, precision - 0.1734, recall - 0.713, accuracy - 0.6348, fscore - 0.2716, iou_score - 0.1688]train:  38%|███▊      | 3/8 [00:22<00:26,  5.37s/it, dsc_plus_plus_loss_breast - 0.5879, dsc_plus_plus_loss_dense - 0.9194, dsc_plus_plus_loss_weighted - 1.507, l1_loss - 0.7306, precision - 0.1734, recall - 0.713, accuracy - 0.6348, fscore - 0.2716, iou_score - 0.1688]train:  38%|███▊      | 3/8 [00:23<00:26,  5.37s/it, dsc_plus_plus_loss_breast - 0.572, dsc_plus_plus_loss_dense - 0.9128, dsc_plus_plus_loss_weighted - 1.485, l1_loss - 0.7182, precision - 0.215, recall - 0.7789, accuracy - 0.6835, fscore - 0.322, iou_score - 0.2112]  train:  50%|█████     | 4/8 [00:23<00:14,  3.65s/it, dsc_plus_plus_loss_breast - 0.572, dsc_plus_plus_loss_dense - 0.9128, dsc_plus_plus_loss_weighted - 1.485, l1_loss - 0.7182, precision - 0.215, recall - 0.7789, accuracy - 0.6835, fscore - 0.322, iou_score - 0.2112]train:  50%|█████     | 4/8 [00:36<00:14,  3.65s/it, dsc_plus_plus_loss_breast - 0.5631, dsc_plus_plus_loss_dense - 0.9036, dsc_plus_plus_loss_weighted - 1.467, l1_loss - 0.708, precision - 0.2453, recall - 0.8129, accuracy - 0.7157, fscore - 0.3581, iou_score - 0.2417]train:  62%|██████▎   | 5/8 [00:36<00:21,  7.17s/it, dsc_plus_plus_loss_breast - 0.5631, dsc_plus_plus_loss_dense - 0.9036, dsc_plus_plus_loss_weighted - 1.467, l1_loss - 0.708, precision - 0.2453, recall - 0.8129, accuracy - 0.7157, fscore - 0.3581, iou_score - 0.2417]train:  62%|██████▎   | 5/8 [00:37<00:21,  7.17s/it, dsc_plus_plus_loss_breast - 0.5512, dsc_plus_plus_loss_dense - 0.8973, dsc_plus_plus_loss_weighted - 1.449, l1_loss - 0.6982, precision - 0.2672, recall - 0.841, accuracy - 0.7362, fscore - 0.3828, iou_score - 0.2639]train:  75%|███████▌  | 6/8 [00:37<00:10,  5.08s/it, dsc_plus_plus_loss_breast - 0.5512, dsc_plus_plus_loss_dense - 0.8973, dsc_plus_plus_loss_weighted - 1.449, l1_loss - 0.6982, precision - 0.2672, recall - 0.841, accuracy - 0.7362, fscore - 0.3828, iou_score - 0.2639]train:  75%|███████▌  | 6/8 [00:38<00:10,  5.08s/it, dsc_plus_plus_loss_breast - 0.5434, dsc_plus_plus_loss_dense - 0.8916, dsc_plus_plus_loss_weighted - 1.435, l1_loss - 0.6907, precision - 0.2867, recall - 0.8623, accuracy - 0.7532, fscore - 0.4041, iou_score - 0.2837]train:  88%|████████▊ | 7/8 [00:38<00:03,  3.75s/it, dsc_plus_plus_loss_breast - 0.5434, dsc_plus_plus_loss_dense - 0.8916, dsc_plus_plus_loss_weighted - 1.435, l1_loss - 0.6907, precision - 0.2867, recall - 0.8623, accuracy - 0.7532, fscore - 0.4041, iou_score - 0.2837]train:  88%|████████▊ | 7/8 [00:39<00:03,  3.75s/it, dsc_plus_plus_loss_breast - 0.5378, dsc_plus_plus_loss_dense - 0.8863, dsc_plus_plus_loss_weighted - 1.424, l1_loss - 0.6847, precision - 0.3043, recall - 0.879, accuracy - 0.7674, fscore - 0.4226, iou_score - 0.3015] train: 100%|██████████| 8/8 [00:39<00:00,  2.71s/it, dsc_plus_plus_loss_breast - 0.5378, dsc_plus_plus_loss_dense - 0.8863, dsc_plus_plus_loss_weighted - 1.424, l1_loss - 0.6847, precision - 0.3043, recall - 0.879, accuracy - 0.7674, fscore - 0.4226, iou_score - 0.3015]train: 100%|██████████| 8/8 [00:39<00:00,  4.94s/it, dsc_plus_plus_loss_breast - 0.5378, dsc_plus_plus_loss_dense - 0.8863, dsc_plus_plus_loss_weighted - 1.424, l1_loss - 0.6847, precision - 0.3043, recall - 0.879, accuracy - 0.7674, fscore - 0.4226, iou_score - 0.3015]
-valid:   0%|          | 0/10 [00:00<?, ?it/s]valid:   0%|          | 0/10 [00:04<?, ?it/s, dsc_plus_plus_loss_breast - 0.4819, dsc_plus_plus_loss_dense - 0.8794, dsc_plus_plus_loss_weighted - 1.361, l1_loss - 0.6523, precision - 0.2131, recall - 0.9715, accuracy - 0.6208, fscore - 0.329, iou_score - 0.2109]valid:  10%|█         | 1/10 [00:04<00:42,  4.70s/it, dsc_plus_plus_loss_breast - 0.4819, dsc_plus_plus_loss_dense - 0.8794, dsc_plus_plus_loss_weighted - 1.361, l1_loss - 0.6523, precision - 0.2131, recall - 0.9715, accuracy - 0.6208, fscore - 0.329, iou_score - 0.2109]valid:  10%|█         | 1/10 [00:04<00:42,  4.70s/it, dsc_plus_plus_loss_breast - 0.4974, dsc_plus_plus_loss_dense - 0.897, dsc_plus_plus_loss_weighted - 1.394, l1_loss - 0.6698, precision - 0.202, recall - 0.9782, accuracy - 0.6252, fscore - 0.3137, iou_score - 0.2006] valid:  20%|██        | 2/10 [00:04<00:16,  2.00s/it, dsc_plus_plus_loss_breast - 0.4974, dsc_plus_plus_loss_dense - 0.897, dsc_plus_plus_loss_weighted - 1.394, l1_loss - 0.6698, precision - 0.202, recall - 0.9782, accuracy - 0.6252, fscore - 0.3137, iou_score - 0.2006]valid:  20%|██        | 2/10 [00:04<00:16,  2.00s/it, dsc_plus_plus_loss_breast - 0.4975, dsc_plus_plus_loss_dense - 0.8941, dsc_plus_plus_loss_weighted - 1.392, l1_loss - 0.6682, precision - 0.2029, recall - 0.9807, accuracy - 0.6219, fscore - 0.3153, iou_score - 0.2016]valid:  30%|███       | 3/10 [00:04<00:07,  1.14s/it, dsc_plus_plus_loss_breast - 0.4975, dsc_plus_plus_loss_dense - 0.8941, dsc_plus_plus_loss_weighted - 1.392, l1_loss - 0.6682, precision - 0.2029, recall - 0.9807, accuracy - 0.6219, fscore - 0.3153, iou_score - 0.2016]valid:  30%|███       | 3/10 [00:05<00:07,  1.14s/it, dsc_plus_plus_loss_breast - 0.5115, dsc_plus_plus_loss_dense - 0.8852, dsc_plus_plus_loss_weighted - 1.397, l1_loss - 0.6702, precision - 0.1991, recall - 0.9835, accuracy - 0.6186, fscore - 0.3128, iou_score - 0.1979]valid:  40%|████      | 4/10 [00:05<00:04,  1.36it/s, dsc_plus_plus_loss_breast - 0.5115, dsc_plus_plus_loss_dense - 0.8852, dsc_plus_plus_loss_weighted - 1.397, l1_loss - 0.6702, precision - 0.1991, recall - 0.9835, accuracy - 0.6186, fscore - 0.3128, iou_score - 0.1979]valid:  40%|████      | 4/10 [00:09<00:04,  1.36it/s, dsc_plus_plus_loss_breast - 0.5189, dsc_plus_plus_loss_dense - 0.8933, dsc_plus_plus_loss_weighted - 1.412, l1_loss - 0.6784, precision - 0.193, recall - 0.9851, accuracy - 0.6171, fscore - 0.3043, iou_score - 0.1919] valid:  50%|█████     | 5/10 [00:09<00:09,  1.99s/it, dsc_plus_plus_loss_breast - 0.5189, dsc_plus_plus_loss_dense - 0.8933, dsc_plus_plus_loss_weighted - 1.412, l1_loss - 0.6784, precision - 0.193, recall - 0.9851, accuracy - 0.6171, fscore - 0.3043, iou_score - 0.1919]valid:  50%|█████     | 5/10 [00:09<00:09,  1.99s/it, dsc_plus_plus_loss_breast - 0.5281, dsc_plus_plus_loss_dense - 0.8929, dsc_plus_plus_loss_weighted - 1.421, l1_loss - 0.6829, precision - 0.1881, recall - 0.9866, accuracy - 0.6143, fscore - 0.2986, iou_score - 0.1872]valid:  60%|██████    | 6/10 [00:09<00:05,  1.35s/it, dsc_plus_plus_loss_breast - 0.5281, dsc_plus_plus_loss_dense - 0.8929, dsc_plus_plus_loss_weighted - 1.421, l1_loss - 0.6829, precision - 0.1881, recall - 0.9866, accuracy - 0.6143, fscore - 0.2986, iou_score - 0.1872]valid:  60%|██████    | 6/10 [00:09<00:05,  1.35s/it, dsc_plus_plus_loss_breast - 0.5243, dsc_plus_plus_loss_dense - 0.8851, dsc_plus_plus_loss_weighted - 1.409, l1_loss - 0.6767, precision - 0.1928, recall - 0.9822, accuracy - 0.6159, fscore - 0.3053, iou_score - 0.1918]valid:  70%|███████   | 7/10 [00:09<00:02,  1.05it/s, dsc_plus_plus_loss_breast - 0.5243, dsc_plus_plus_loss_dense - 0.8851, dsc_plus_plus_loss_weighted - 1.409, l1_loss - 0.6767, precision - 0.1928, recall - 0.9822, accuracy - 0.6159, fscore - 0.3053, iou_score - 0.1918]valid:  70%|███████   | 7/10 [00:09<00:02,  1.05it/s, dsc_plus_plus_loss_breast - 0.5193, dsc_plus_plus_loss_dense - 0.8823, dsc_plus_plus_loss_weighted - 1.402, l1_loss - 0.6725, precision - 0.197, recall - 0.9811, accuracy - 0.6194, fscore - 0.3107, iou_score - 0.1959] valid:  80%|████████  | 8/10 [00:09<00:01,  1.47it/s, dsc_plus_plus_loss_breast - 0.5193, dsc_plus_plus_loss_dense - 0.8823, dsc_plus_plus_loss_weighted - 1.402, l1_loss - 0.6725, precision - 0.197, recall - 0.9811, accuracy - 0.6194, fscore - 0.3107, iou_score - 0.1959]valid:  80%|████████  | 8/10 [00:13<00:01,  1.47it/s, dsc_plus_plus_loss_breast - 0.5205, dsc_plus_plus_loss_dense - 0.8804, dsc_plus_plus_loss_weighted - 1.401, l1_loss - 0.6721, precision - 0.1966, recall - 0.9765, accuracy - 0.6175, fscore - 0.3105, iou_score - 0.1955]valid:  90%|█████████ | 9/10 [00:13<00:01,  1.66s/it, dsc_plus_plus_loss_breast - 0.5205, dsc_plus_plus_loss_dense - 0.8804, dsc_plus_plus_loss_weighted - 1.401, l1_loss - 0.6721, precision - 0.1966, recall - 0.9765, accuracy - 0.6175, fscore - 0.3105, iou_score - 0.1955]valid:  90%|█████████ | 9/10 [00:13<00:01,  1.66s/it, dsc_plus_plus_loss_breast - 0.5215, dsc_plus_plus_loss_dense - 0.8845, dsc_plus_plus_loss_weighted - 1.406, l1_loss - 0.6748, precision - 0.1943, recall - 0.9768, accuracy - 0.6163, fscore - 0.3072, iou_score - 0.1933]valid: 100%|██████████| 10/10 [00:13<00:00,  1.18s/it, dsc_plus_plus_loss_breast - 0.5215, dsc_plus_plus_loss_dense - 0.8845, dsc_plus_plus_loss_weighted - 1.406, l1_loss - 0.6748, precision - 0.1943, recall - 0.9768, accuracy - 0.6163, fscore - 0.3072, iou_score - 0.1933]valid: 100%|██████████| 10/10 [00:13<00:00,  1.36s/it, dsc_plus_plus_loss_breast - 0.5215, dsc_plus_plus_loss_dense - 0.8845, dsc_plus_plus_loss_weighted - 1.406, l1_loss - 0.6748, precision - 0.1943, recall - 0.9768, accuracy - 0.6163, fscore - 0.3072, iou_score - 0.1933]
-fscore: 0.30722378194332123
-
-Epoch: 1
