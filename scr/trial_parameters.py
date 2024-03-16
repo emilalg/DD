@@ -1,3 +1,6 @@
+
+from utils import Config
+
 class TrialParameters:
     """
     Class representing the parameters for hypertuner trials.
@@ -17,6 +20,7 @@ class TrialParameters:
         self.loss_weights = None
         self.lr_min_max = (0.0001, 0.009) # Default range for learning rate
         self.initialize_loss_weights()
+        self.config = Config()
 
     def initialize_loss_weights(self):
         """
@@ -47,9 +51,9 @@ class TrialParameters:
             dict: The study_queue trial parameters.
         """
         trial_params = {
-            "optimizer": "Adam",
+            "optimizer": self.config.optimizer,
             "loss": self.loss,
-            "activation_function": "sigmoid",
+            "activation_function": self.config.activation_function,
             "lr": self.lr_min_max[0]
         }
 
