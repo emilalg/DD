@@ -80,7 +80,7 @@ def main():
 
     # define loss function
     # loss = getattr(smp.utils.losses, config.loss_function)()
-    loss = smp.utils.DSCPlusPlusLoss(beta=config.beta, gamma=config.gamma)
+    loss = smp.utils.losses.DSCPlusPlusLoss(beta=config.beta, gamma=config.gamma)
 
     # define metrics which will be monitored during training
     metrics = [

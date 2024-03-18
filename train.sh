@@ -1,6 +1,13 @@
-DIR="$( cd "$( dirname "$0" )" && pwd )"
+#!/bin/bash
+#SBATCH --job-name=eetu_alpha_train
+#SBATCH --account=project_2009901
+#SBATCH --partition=gpu
+#SBATCH --time=50:00:00
+#SBATCH --ntasks=1
+#SBATCH --cpus-per-task=10
+#SBATCH --mem=20GB
+#SBATCH --gres=gpu:v100:1
 
-python scr/train.py #--logs_file_path test_output/logs/test1.txt --model_save_path test_output/models/test1.pth
 
-#example evaluate command
-#python scr/evaluate.py --data_path ${DIR}/breast-density-prediction/ --dataset test --split test --test_batch_size 1 --num_epochs 10 --num_workers 0 --loss_fucntion LOSS --model_save_path test_output/models/test1.pth --results_path test_output/evaluation/dataset_name.txt
+module load pytorch
+srun python3 /users/eetusoro/project_2009901/seriaaliajot/pumpingironpower/Alpha/scr/train.py && python3 /users/eetusoro/project_2009901/seriaaliajot/pumpingironpower/Alpha/scr/predictions.py
