@@ -79,7 +79,8 @@ def main():
     # print(model, (3, 256, 256))
 
     # define loss function
-    loss = getattr(smp.utils.losses, config.loss_function)()
+    # loss = getattr(smp.utils.losses, config.loss_function)()
+    loss = smp.utils.DSCPlusPlusLoss(beta=config.beta, gamma=config.gamma)
 
     # define metrics which will be monitored during training
     metrics = [

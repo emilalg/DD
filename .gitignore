@@ -36,3 +36,5 @@ scr/autoalbument-config-search-cifar10/outputs/*
 test_output/**/*
 
 .vscode/*
+
+job.sh
