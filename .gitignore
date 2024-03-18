@@ -38,3 +38,4 @@ test_output/**/*
 .vscode/*
 
 job.sh
+*.sh
