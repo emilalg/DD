@@ -212,7 +212,7 @@ def process_testsubmission_mode(dataloader, model, ground_truths):
             ground_truth_densities.append(ground_truth_density)
 
         mean_absolute_error = np.mean(absolute_errors)
-        density_file.write(f"Mean Absolute Error: {mean_absolute_error:.3f}\n")
+        density_file.write(f"{config.model_name}'s Mean Absolute Error: {mean_absolute_error:.3f}\n")
 
         # Calculate and log the mean and confidence interval for the density values
         def mean_cal(data):
@@ -244,7 +244,8 @@ def process_testsubmission_mode(dataloader, model, ground_truths):
 def main():
     config = Config()
     PREDICTION_MODEL_PATH = os.path.join(config.output_path, f"models/{config.model_name}.pth")
-
+    print("Predictions from", os.path.realpath(__file__))
+    
     ground_truths = load_ground_truths(os.path.join(config.train_data_path, "../../train.csv"))
     ground_truths_path = os.path.join(config.train_data_path, "../../train.csv")
 
