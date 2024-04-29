@@ -1,4 +1,3 @@
-# Top secret repository to hide from the scientific community 🕵️
 
 ## Deepdensity  
 # UEF Breast Cancer Group - Challenge
